@@ -35,7 +35,7 @@
 
 .item.critical {
   border-left-color: var(--critical);
-  background: linear-gradient(90deg, rgba(208, 59, 59, 0.1), transparent 60%);
+  background: linear-gradient(90deg, var(--danger-subtle), transparent 60%);
 }
 
 .icon {

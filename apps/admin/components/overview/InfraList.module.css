@@ -16,7 +16,7 @@
 }
 
 .issue {
-  background: rgba(236, 131, 90, 0.07);
+  background: var(--danger-subtle);
 }
 
 .row {

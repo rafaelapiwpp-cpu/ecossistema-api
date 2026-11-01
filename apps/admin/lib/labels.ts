@@ -7,14 +7,19 @@ import type {
   QualityRating,
   TenantStatus,
 } from "@eco/core";
+import { STATUS } from "@eco/tokens/status-map";
 
-/** Rótulos em português para os enums do domínio. A UI nunca mostra o valor cru da Meta. */
+/**
+ * Rótulos em português para os enums do domínio. A UI nunca mostra o valor cru da Meta.
+ * Onde o mapa do design system (@eco/tokens/status-map) cobre o enum, o rótulo vem de lá.
+ * O resto é local até o chat UX & Design System incorporar (número, BM, saúde, severidade).
+ */
 
 export const QUALITY_LABEL: Record<QualityRating, string> = {
-  GREEN: "Alta",
-  YELLOW: "Média",
-  RED: "Baixa",
-  UNKNOWN: "Sem avaliação",
+  GREEN: STATUS.quality.GREEN.label,
+  YELLOW: STATUS.quality.YELLOW.label,
+  RED: STATUS.quality.RED.label,
+  UNKNOWN: "Sem avaliação", // não está no mapa do DS
 };
 
 export const NUMBER_STATUS_LABEL: Record<PhoneNumberStatus, string> = {
@@ -32,11 +37,12 @@ export const NUMBER_STATUS_LABEL: Record<PhoneNumberStatus, string> = {
 };
 
 export const TENANT_STATUS_LABEL: Record<TenantStatus, string> = {
-  trial: "Em teste",
-  active: "Ativo",
-  past_due: "Inadimplente",
-  suspended: "Suspenso",
-  churned: "Encerrado",
+  trial: STATUS.tenant.trial.label,
+  active: STATUS.tenant.active.label,
+  past_due: STATUS.tenant.past_due.label,
+  suspended: STATUS.tenant.suspended.label,
+  // O domínio usa "churned" (encerrado, dados retidos pela LGPD); o DS chama de "canceled".
+  churned: STATUS.tenant.canceled.label,
 };
 
 export const VERIFICATION_LABEL: Record<BusinessVerificationStatus, string> = {

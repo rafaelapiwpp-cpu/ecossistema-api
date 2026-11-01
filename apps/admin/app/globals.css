@@ -1,106 +1,160 @@
+/* Ecossistema UI — integração com Tailwind CSS v4 (cópia de design-system/tailwind.css).
+   1. tokens.css   → gerado de tokens.json (pacote @eco/tokens). Não edite à mão.
+   2. @theme inline → expõe os tokens semânticos como utilitários (bg-surface, text-fg-muted, bg-brand…).
+   Componentes usam SÓ estes utilitários semânticos: nada de bg-violet-600 ou hex.
+   Mudanças de token nascem no chat UX & Design System. */
+
 @import "tailwindcss";
+@import "@eco/tokens/tokens.css";
 
-/*
- * Tokens do painel admin (decisão travada: dark + destaque violeta).
- *
- * Direção: CRM denso de operação noturna. Base grafite com leve viés
- * violeta; o violeta é o único acento de marca (navegação ativa, foco,
- * "lidas", barras de uso). Cor forte fica reservada para estado (qualidade
- * da Meta, saúde, severidade), então qualquer coisa vermelha/âmbar na tela
- * é algo para olhar.
- *
- * Estes tokens são a fonte única: CSS Modules usam var(--x) e o Tailwind
- * os expõe como utilitários pelo bloco @theme no fim do arquivo
- * (bg-surface, text-ink-2, border-hairline, text-accent…).
- * O chat "UX & Design System" é dono desta paleta daqui em diante.
- */
+@custom-variant admin (&:where([data-surface="admin"], [data-surface="admin"] *));
+@custom-variant portal (&:where([data-surface="portal"], [data-surface="portal"] *));
+@custom-variant compact (&:where([data-density="compact"], [data-density="compact"] *));
 
+@theme inline {
+  /* superfícies */
+  --color-canvas: var(--bg-canvas);
+  --color-sidebar: var(--bg-sidebar);
+  --color-surface: var(--bg-surface);
+  --color-raised: var(--bg-raised);
+  --color-overlay: var(--bg-overlay);
+  --color-field: var(--bg-input);
+
+  /* texto */
+  --color-fg: var(--text-primary);
+  --color-fg-secondary: var(--text-secondary);
+  --color-fg-muted: var(--text-muted);
+  --color-fg-disabled: var(--text-disabled);
+
+  /* bordas */
+  --color-line: var(--border-subtle);
+  --color-line-strong: var(--border-default);
+  --color-line-control: var(--border-control);
+
+  /* marca do tenant (camada white-label) */
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-on-brand: var(--on-brand);
+  --color-brand-text: var(--brand-text);
+  --color-brand-ring: var(--brand-ring);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-brand-border: var(--brand-border);
+
+  /* status (fixos) */
+  --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
+  --color-success-border: var(--success-border);
+  --color-warning: var(--warning);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-warning-border: var(--warning-border);
+  --color-danger: var(--danger);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-danger-border: var(--danger-border);
+  --color-danger-solid: var(--danger-solid);
+  --color-danger-solid-hover: var(--danger-solid-hover);
+  --color-on-danger: var(--on-danger);
+  --color-info: var(--info);
+  --color-info-subtle: var(--info-subtle);
+  --color-info-border: var(--info-border);
+
+  /* gráficos */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+  --color-chart-7: var(--chart-7);
+  --color-chart-8: var(--chart-8);
+
+  /* tipografia: next/font define --font-geist-sans / --font-geist-mono no <html> */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+/* Escala tipográfica como utilitários: text-metric, text-overline… */
+@utility text-hero { font-size: 48px; line-height: 52px; font-weight: 600; letter-spacing: -0.02em; }
+@utility text-metric { font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.01em; }
+@utility text-page-title { font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -0.01em; }
+@utility text-section-title { font-size: 18px; line-height: 26px; font-weight: 600; }
+@utility text-card-title { font-size: 15px; line-height: 20px; font-weight: 600; }
+@utility text-body { font-size: 14px; line-height: 20px; }
+@utility text-body-sm { font-size: 13px; line-height: 18px; }
+@utility text-caption { font-size: 12px; line-height: 16px; }
+@utility text-overline { font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+
+@layer base {
+  :root { color-scheme: dark; }
+  body { @apply bg-canvas text-fg font-sans text-body antialiased; }
+  :focus-visible { outline: 2px solid var(--brand-ring); outline-offset: 2px; }
+
+  /* O preflight deixa todo svg como display:block; os ícones daqui vivem no meio do texto. */
+  svg { display: inline; vertical-align: baseline; }
+}
+
+/* Densidade: Admin = compact, Portal = default */
+:root { --row-h: var(--row-default); --ctl-h: var(--control-md); --card-pad: var(--space-5); --gutter: var(--space-6); }
+[data-density="compact"] { --row-h: var(--row-compact); --ctl-h: var(--control-sm); --card-pad: var(--space-4); --gutter: var(--space-4); }
+
+/* ------------------------------------------------------------------ */
+/* PONTE TEMPORÁRIA — específica do Admin, não faz parte do design     */
+/* system. Os CSS Modules da Visão geral foram escritos antes do DS    */
+/* e usam estes nomes; aqui eles só apontam para tokens semânticos.    */
+/* Telas novas usam os utilitários do DS direto. Remover quando a      */
+/* Visão geral migrar para os componentes de @eco/ui.                  */
+/* ------------------------------------------------------------------ */
 :root {
-  color-scheme: dark;
+  --canvas: var(--bg-canvas);
+  --surface: var(--bg-surface);
+  --surface-raised: var(--bg-raised);
+  --surface-sunken: var(--bg-sidebar);
+  --hairline: var(--border-subtle);
+  --hairline-strong: var(--border-default);
 
-  /* Superfícies */
-  --canvas: #0e0d14;
-  --surface: #15141e;
-  --surface-raised: #1d1b29;
-  --surface-sunken: #0a0a10;
-  --hairline: #262335;
-  --hairline-strong: #363149;
+  --ink: var(--text-primary);
+  --ink-2: var(--text-secondary);
+  --ink-3: var(--text-muted);
 
-  /* Tinta */
-  --ink: #ebe9f2;
-  --ink-2: #aba7bd;
-  --ink-3: #7a758f;
+  /* Marca = ação (nav ativa, link, foco, seleção). */
+  --accent: var(--brand-text);
+  --accent-soft: var(--brand-subtle);
 
-  /* Acento de marca: violeta */
-  --accent: #9d7bff;
-  --accent-strong: #7c5cf0;
-  --accent-soft: rgba(157, 123, 255, 0.14);
+  /* Severidade de alerta. O DS tem 4 intenções; "sério" ainda não tem tom
+     próprio e usa danger (diferenciado por ícone e rótulo). Pedido aberto
+     ao chat UX & Design System. */
+  --good: var(--success);
+  --good-text: var(--success);
+  --warning-text: var(--warning);
+  --serious: var(--danger);
+  --serious-text: var(--danger);
+  --critical: var(--danger-solid);
+  --critical-text: var(--danger);
 
-  /* Ciclo da mensagem (gráfico de volume) — semântico, não categórico:
-     cinza = entregue e não lida, violeta = lida (resultado que importa), vermelho = falha. */
-  --msg-read: #9d7bff;
-  --msg-delivered: #5d5873;
-  --msg-failed: #d03b3b;
+  /* Ciclo da mensagem no gráfico: séries usam tokens de gráfico, nunca a marca. */
+  --msg-read: var(--chart-7);
+  --msg-delivered: var(--chart-trend);
+  --msg-failed: var(--danger);
 
-  /* Estado — preenchimentos */
-  --good: #0ca30c;
-  --warning: #fab219;
-  --serious: #ec835a;
-  --critical: #d03b3b;
-
-  /* Estado — texto (variações mais claras para passar contraste sobre a superfície) */
-  --good-text: #4fc86a;
-  --warning-text: #fab219;
-  --serious-text: #f29b78;
-  --critical-text: #f27f7f;
-
-  /* Tipografia */
-  --font-sans: var(--font-plex), "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --text-xs: 0.75rem; /* 12 */
-  --text-sm: 0.8125rem; /* 13 */
-  --text-md: 0.875rem; /* 14 */
-  --text-lg: 1rem; /* 16 */
-  --text-xl: 1.5rem; /* 24 */
-  --text-2xl: 1.75rem; /* 28 */
-
-  /* Espaço (base 4) */
-  --s1: 4px;
-  --s2: 8px;
-  --s3: 12px;
-  --s4: 16px;
-  --s5: 20px;
-  --s6: 24px;
-  --s8: 32px;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-md: 0.875rem;
+  --text-lg: 1rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 1.75rem;
+  --s1: var(--space-1);
+  --s2: var(--space-2);
+  --s3: var(--space-3);
+  --s4: var(--space-4);
+  --s5: var(--space-5);
+  --s6: var(--space-6);
+  --s8: var(--space-8);
   --s10: 40px;
-
   --radius-panel: 8px;
   --radius-chip: 4px;
-  --sidebar-width: 236px;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  background: var(--canvas);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  font-size: var(--text-md);
-  line-height: 1.45;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: "kern" 1;
-}
-
+/* Utilitários globais usados pelos componentes da Visão geral. */
 h1,
 h2,
 h3,
@@ -109,18 +163,12 @@ p {
 }
 
 a {
-  color: var(--accent);
+  color: var(--brand-text);
   text-decoration: none;
 }
 
 a:hover {
   text-decoration: underline;
-}
-
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: 2px;
 }
 
 .num {
@@ -146,35 +194,4 @@ a:hover {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
-}
-
-/* O preflight do Tailwind deixa todo svg como display:block; os ícones daqui
-   vivem no meio do texto. Mesmo layer (base), declarado depois: vence o
-   preflight e ainda perde para utilitários como `block`. */
-@layer base {
-  svg {
-    display: inline;
-    vertical-align: baseline;
-  }
-}
-
-/* ---------- Tokens -> utilitários Tailwind (v4) ---------- */
-@theme inline {
-  --color-canvas: var(--canvas);
-  --color-surface: var(--surface);
-  --color-surface-raised: var(--surface-raised);
-  --color-surface-sunken: var(--surface-sunken);
-  --color-hairline: var(--hairline);
-  --color-hairline-strong: var(--hairline-strong);
-  --color-ink: var(--ink);
-  --color-ink-2: var(--ink-2);
-  --color-ink-3: var(--ink-3);
-  --color-accent: var(--accent);
-  --color-accent-strong: var(--accent-strong);
-  --color-accent-soft: var(--accent-soft);
-  --color-good: var(--good);
-  --color-warning: var(--warning);
-  --color-serious: var(--serious);
-  --color-critical: var(--critical);
-  --font-sans: var(--font-plex), "IBM Plex Sans", system-ui, sans-serif;
 }

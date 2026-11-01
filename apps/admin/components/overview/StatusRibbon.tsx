@@ -3,7 +3,7 @@ import { Icon } from "@/components/ui/Icon";
 import { formatCompact, formatDelta, formatInt, formatPercent } from "@/lib/format";
 import s from "./StatusRibbon.module.css";
 
-/** "de 12; 1 em teste, 2 suspensos" — omite contagens zeradas. */
+/** "de 12; 1 em trial, 2 suspensos" — omite contagens zeradas. */
 function withDetails(base: string, parts: Array<[number, string, string]>): string {
   const extras = parts.filter(([n]) => n > 0).map(([n, one, many]) => `${n} ${n === 1 ? one : many}`);
   return extras.length ? `${base}; ${extras.join(", ")}` : base;
@@ -25,7 +25,7 @@ export function StatusRibbon({ kpis }: { kpis: AdminOverview["kpis"] }) {
           <dt>Clientes ativos</dt>
           <dd className={`${s.value} num`}>{kpis.tenants.active}</dd>
           <dd className={s.context}>{withDetails(`de ${kpis.tenants.total}`, [
-            [kpis.tenants.trial, "em teste", "em teste"],
+            [kpis.tenants.trial, "em trial", "em trial"],
             [kpis.tenants.pastDue, "inadimplente", "inadimplentes"],
             [kpis.tenants.suspended, "suspenso", "suspensos"],
           ])}</dd>

@@ -50,7 +50,8 @@
 }
 
 .hoverBand {
-  fill: rgba(227, 236, 237, 0.05);
+  fill: var(--text-primary);
+  fill-opacity: 0.05;
 }
 
 /* ---------- Legenda ---------- */
@@ -95,7 +96,7 @@
   background: var(--surface-raised);
   border: 1px solid var(--hairline-strong);
   border-radius: 6px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-overlay);
   pointer-events: none;
 }
 

@@ -179,21 +179,21 @@
 
 /* Saudável fica calmo; problema fica sólido e salta aos olhos. */
 .green {
-  background: rgba(12, 163, 12, 0.14);
-  border-color: rgba(12, 163, 12, 0.5);
+  background: var(--success-subtle);
+  border-color: var(--success-border);
   color: var(--ink-2);
 }
 
 .yellow {
   background: var(--warning);
   border-color: var(--warning);
-  color: #1d1500;
+  color: var(--bg-canvas);
 }
 
 .red {
-  background: var(--critical);
-  border-color: var(--critical);
-  color: #ffffff;
+  background: var(--danger-solid);
+  border-color: var(--danger-solid);
+  color: var(--on-danger);
 }
 
 .unknown {
@@ -210,7 +210,7 @@
 
 /* Bloqueado pelo admin: textura diagonal sobre a cor da qualidade. */
 .blocked {
-  background-image: repeating-linear-gradient(135deg, transparent 0 4px, rgba(14, 13, 20, 0.6) 4px 6px);
+  background-image: repeating-linear-gradient(135deg, transparent 0 4px, color-mix(in srgb, var(--bg-canvas) 60%, transparent) 4px 6px);
 }
 
 .chipMini {
@@ -250,7 +250,7 @@
   background: var(--surface-raised);
   border: 1px solid var(--hairline-strong);
   border-radius: 6px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-overlay);
   pointer-events: none;
 }
 

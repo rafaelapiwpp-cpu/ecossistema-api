@@ -11,6 +11,7 @@ apps/admin/            Next.js (App Router) — painel admin
   components/overview/ blocos do dashboard (só compõem, sem regra de negócio)
   components/shell/    moldura e navegação
   lib/                 formatação pt-BR e rótulos dos enums
+packages/tokens/       @eco/tokens — tokens.css + status-map.ts do design system (cópia de design-system/)
 packages/core/         @eco/core — compartilhado com o futuro portal do cliente
   src/domain/          tipos = schema futuro do Postgres
   src/data/            interface DataSource + implementação mock
@@ -34,5 +35,9 @@ npm run mock:overview   # imprime o read model do dashboard no terminal
 
 ## Estilo
 
-Tokens em `apps/admin/app/globals.css` (dark + violeta). CSS Modules para componentes;
-Tailwind v4 disponível com os mesmos tokens (`bg-surface`, `text-ink-2`, `border-hairline`, `text-accent`).
+Design system **Ecossistema UI** (dono: chat UX & Design System). `app/globals.css` é a integração
+Tailwind v4 dele: utilitários semânticos `bg-surface`, `text-fg-muted`, `border-line`, `bg-brand`…
+Fontes Geist via `next/font`. `<html data-surface="admin" data-density="compact">`.
+
+A Visão geral ainda usa CSS Modules escritos antes do DS; uma camada-ponte no fim do `globals.css`
+aponta os nomes antigos para os tokens semânticos. Telas novas usam os utilitários do DS direto.

@@ -1,17 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import localFont from "next/font/local";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-// IBM Plex Sans servida do próprio repositório (licença OFL em ./fonts).
-const plex = localFont({
-  src: [
-    { path: "./fonts/IBMPlexSans-Regular.woff2", weight: "400", style: "normal" },
-    { path: "./fonts/IBMPlexSans-Medium.woff2", weight: "500", style: "normal" },
-    { path: "./fonts/IBMPlexSans-SemiBold.woff2", weight: "600", style: "normal" },
-  ],
-  variable: "--font-plex",
-  display: "swap",
-});
+// Design system: Geist (UI) + Geist Mono (IDs, wamid, WABA ID).
+const sans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
+const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
 export const metadata: Metadata = {
   title: { default: "Painel admin | API Hub", template: "%s | API Hub" },
@@ -20,13 +13,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0e0d14",
   colorScheme: "dark",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={plex.variable}>
+    <html lang="pt-BR" data-surface="admin" data-theme="ecossistema" data-density="compact" className={`${sans.variable} ${mono.variable}`}>
       <body>{children}</body>
     </html>
   );
