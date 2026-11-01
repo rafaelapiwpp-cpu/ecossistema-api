@@ -1,0 +1,23 @@
+{
+  "name": "ecossistema-api",
+  "private": true,
+  "version": "0.1.0",
+  "description": "CRM/SaaS multi-tenant para disparos via WhatsApp Cloud API oficial — painel admin + portal do cliente (white-label).",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20.9"
+  },
+  "scripts": {
+    "dev": "npm run dev -w @eco/admin",
+    "build": "npm run build -w @eco/admin",
+    "start": "npm run start -w @eco/admin",
+    "typecheck": "npm run typecheck -w @eco/core && npm run typecheck -w @eco/admin",
+    "mock:overview": "npm run mock:overview -w @eco/core"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

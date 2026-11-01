@@ -1,0 +1,52 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 var(--s2);
+}
+
+.item {
+  padding: 9px var(--s5);
+  border-top: 1px solid var(--hairline);
+}
+
+.issue {
+  background: rgba(236, 131, 90, 0.07);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 104px;
+  gap: var(--s3);
+  align-items: center;
+}
+
+.name {
+  font-size: var(--text-md);
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.signal {
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.status {
+  justify-self: start;
+}
+
+.detail {
+  margin-top: 4px;
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+  line-height: 1.45;
+}
