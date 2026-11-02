@@ -21,7 +21,8 @@ docs/data-model.md     mapeamento tipos → tabelas
 ```
 
 Fluxo de uma tela: `page.tsx` → `getAdminOverview(getDataSource())` → objeto serializável → componentes.
-Ligar o banco = implementar `PostgresDataSource` e definir `DATA_SOURCE=postgres`. Nenhuma tela muda.
+Fonte de dados: Postgres (Neon, schema em `apps/admin/prisma`) quando há `DATABASE_URL`, mock sem banco.
+Força com `DATA_SOURCE=postgres|mock`. Detalhes em `docs/data-model.md`.
 
 ## Rodar
 
@@ -30,6 +31,7 @@ nvm use            # Node 20.9+
 npm install
 npm run dev        # http://localhost:3000
 npm run typecheck
+npm test           # testes de todos os workspaces
 npm run mock:overview   # imprime o read model do dashboard no terminal
 ```
 

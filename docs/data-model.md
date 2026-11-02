@@ -1,6 +1,6 @@
 # Modelo de dados
 
-Os tipos em `packages/core/src/domain/` **são** o schema. Cada `interface` vira uma tabela no Postgres
+Os tipos em `packages/core/src/domain/` **são** o contrato. Cada `interface` vira uma tabela no Postgres
 (Prisma), cada union de strings vira um `enum` ou `text` com `CHECK`. As telas nunca leem tabelas:
 leem a interface `DataSource` (`packages/core/src/data/datasource.ts`), hoje implementada em memória
 (`data/mock`) e depois por uma `PostgresDataSource` com a mesma assinatura.
@@ -74,3 +74,35 @@ enxerga o número.
 Toda entidade de cliente tem `tenantId`. Admin passa filtro opcional; o portal recebe o `tenantId`
 da sessão. Na `PostgresDataSource`, Row Level Security por `tenant_id` é a segunda barreira.
 IDs têm marca de tipo (`TenantId`, `PhoneNumberId`…) e prefixo (`tnt_`, `pn_`…), gerados como ULID.
+
+## Postgres hoje (Neon)
+
+**Schema único:** `apps/admin/prisma/schema.prisma` (tabelas `cliente`, `bm`, `numero`, `template`,
+estados em pt-BR do doc 04). Não existe outro schema; evoluções entram nesse arquivo.
+
+**Como o núcleo lê:** `createPostgresDataSource(store)` em `packages/core/src/data/postgres/`. O app
+injeta um `ContingencyStore` (uma linha de Prisma por tabela, ver `apps/admin/lib/datasource.ts`),
+então o `@eco/core` não depende do cliente gerado. A tradução pt-BR → domínio fica só em `mappers.ts`:
+
+| Banco | Domínio |
+|---|---|
+| `cliente.status` ativo / trial / inadimplente / suspenso / cancelado | `Tenant.status` active / trial / past_due / suspended / churned |
+| `cliente.plano` starter / pro / scale / enterprise | plano `start` / `growth` / `scale` / `enterprise` (`data/plans.ts`) |
+| `bm.status` em_verificacao / escalonando / ativa | `accountStatus = active` |
+| `bm.status` restrita / banida | `accountStatus = restricted / banned` (alerta crítico) |
+| `bm.verificacao` pendente / verificada / recusada | `verificationStatus` pending / verified / rejected |
+| `bm.nivelLimite` 250 / 1000 / 10000 / 100000 / 0 | `TIER_250` / `TIER_2K` / `TIER_10K` / `TIER_100K` / `TIER_UNLIMITED` |
+| `numero.status` pendente / ativo / limitado / restrito / banido / desconectado | `PENDING` / `CONNECTED` / `RATE_LIMITED` / `RESTRICTED` / `BANNED` / `DISCONNECTED` |
+| `numero.status` aquecendo | `CONNECTED` (rampa é throttle nosso, não estado da Meta) |
+| `numero.qualidade` alta / media / baixa / sem_avaliacao | `GREEN` / `YELLOW` / `RED` / `UNKNOWN` |
+| `template.categoria`, `template.status` | `MARKETING`/`UTILITY`/`AUTHENTICATION`, `APPROVED`/`PENDING`/`REJECTED`/`PAUSED`/`DISABLED` |
+
+Registros sem vínculo (número sem BM, BM sem cliente) aparecem sob um tenant/BM sintéticos
+("Sem cliente vinculado", "Sem BM vinculada") para não sumirem; não contam nos indicadores e não
+geram alertas de BM.
+
+**Ainda não está no banco** (volta vazio, nunca inventado): WABAs, campanhas, leads/consentimento,
+mensagens e rollups horários/diários. O uso do limite 24 h da BM é estimado por `numero.enviadasHoje`
+até existirem rollups com destinatários únicos.
+
+**Seleção:** `DATA_SOURCE=postgres|mock`. Sem a variável, o admin usa Postgres quando há `DATABASE_URL`.
