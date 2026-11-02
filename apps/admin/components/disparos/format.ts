@@ -1,5 +1,6 @@
 import type { CampaignStatus, RecipientStatus, MessageStatus, OptOutSource } from '@/lib/disparos/server/entities';
 import type { RunStatus } from '@/lib/disparos/domain/flow-engine';
+import { STATUS, type Intent, type StatusDef } from '@eco/tokens/status-map';
 import { type FlowGraph, type FlowNode, NODE_LABEL, getNode, handleLabel, stepNumbers } from '@/lib/disparos/domain/flow-types';
 
 export type Tone = 'neutral' | 'accent' | 'ok' | 'warn' | 'bad' | 'info';
@@ -32,52 +33,30 @@ export function relative(ms: number | null | undefined, now: number) {
   return d >= 0 ? `em ${s}` : `há ${s}`;
 }
 
-export const CAMPAIGN_STATUS: Record<CampaignStatus, { label: string; tone: Tone }> = {
-  draft: { label: 'Rascunho', tone: 'neutral' },
-  scheduled: { label: 'Agendada', tone: 'info' },
-  running: { label: 'Em andamento', tone: 'accent' },
-  paused: { label: 'Pausada', tone: 'warn' },
-  completed: { label: 'Concluída', tone: 'ok' },
-  canceled: { label: 'Cancelada', tone: 'neutral' },
-  failed: { label: 'Falhou', tone: 'bad' },
-};
+// Rótulos e intenção vêm do status-map do Design System (@eco/tokens), dono: chat UX & DS.
+const INTENT_TONE: Record<Intent, Tone> = { success: 'ok', info: 'info', warning: 'warn', serious: 'warn', danger: 'bad', neutral: 'neutral' };
+function fromDs<K extends string>(m: Record<K, StatusDef>): Record<K, { label: string; tone: Tone }> {
+  return Object.fromEntries(Object.entries<StatusDef>(m).map(([k, v]) => [k, { label: v.label, tone: INTENT_TONE[v.intent] }])) as Record<K, { label: string; tone: Tone }>;
+}
+const labels = <K extends string>(m: Record<K, StatusDef>) =>
+  Object.fromEntries(Object.entries<StatusDef>(m).map(([k, v]) => [k, v.label])) as Record<K, string>;
+
+export const CAMPAIGN_STATUS: Record<CampaignStatus, { label: string; tone: Tone }> = fromDs(STATUS.campaign);
 
 export const RECIPIENT_STATUS: Record<RecipientStatus, { label: string; tone: Tone }> = {
-  pending: { label: 'Na fila', tone: 'neutral' },
-  processing: { label: 'Enviando', tone: 'accent' },
-  accepted: { label: 'Aceita pela API', tone: 'info' },
-  sent: { label: 'Enviada', tone: 'info' },
-  delivered: { label: 'Entregue', tone: 'ok' },
-  read: { label: 'Lida', tone: 'ok' },
-  failed: { label: 'Falhou', tone: 'bad' },
-  skipped_optout: { label: 'Blacklist', tone: 'bad' },
-  skipped_invalid: { label: 'Número inválido', tone: 'warn' },
-  skipped_no_consent: { label: 'Sem opt-in', tone: 'warn' },
+  ...fromDs(STATUS.recipient),
+  // ainda não está no status-map do DS (pedido aberto ao chat UX & DS)
+  skipped_no_consent: { label: 'Pulado: sem opt-in', tone: 'neutral' },
 };
 
-export const RUN_STATUS: Record<RunStatus, { label: string; tone: Tone }> = {
-  active: { label: 'Executando', tone: 'accent' },
-  waiting_delay: { label: 'Aguardando tempo', tone: 'warn' },
-  waiting_reply: { label: 'Aguardando resposta', tone: 'info' },
-  completed: { label: 'Concluído', tone: 'ok' },
-  opted_out: { label: 'Saiu (opt-out)', tone: 'bad' },
-  failed: { label: 'Erro', tone: 'bad' },
-  canceled: { label: 'Cancelado', tone: 'neutral' },
-};
+export const RUN_STATUS: Record<RunStatus, { label: string; tone: Tone }> = fromDs(STATUS.flowRun);
 
 export const MESSAGE_STATUS: Record<MessageStatus, string> = {
   queued: 'na fila', accepted: 'aceita', sent: 'enviada', delivered: 'entregue', read: 'lida',
   played: 'ouvida', failed: 'falhou', received: 'recebida',
 };
 
-export const OPTOUT_SOURCE: Record<OptOutSource, string> = {
-  keyword: 'Palavra-chave (ex.: SAIR)',
-  button: 'Botão de saída',
-  flow_node: 'Etapa Blacklist do fluxo',
-  meta_marketing_optout: 'Parou marketing no WhatsApp',
-  manual: 'Manual',
-  import: 'Importação',
-};
+export const OPTOUT_SOURCE: Record<OptOutSource, string> = labels(STATUS.optOutSource);
 
 /** "Etapa 3 · Botões" */
 export function stepLabel(graph: FlowGraph, nodeId: string | null | undefined, steps = stepNumbers(graph)) {
@@ -110,16 +89,8 @@ export function outcomeLabel(node: FlowNode | undefined, outcome: string): { lab
   return map[outcome] ?? { label: outcome, tone: 'neutral' };
 }
 
-export const CONSENT: Record<'opted_in' | 'opted_out' | 'unknown', { label: string; tone: Tone }> = {
-  opted_in: { label: 'Opt-in registrado', tone: 'ok' },
-  opted_out: { label: 'Opt-out (blacklist)', tone: 'bad' },
-  unknown: { label: 'Sem consentimento', tone: 'neutral' },
-};
+export const CONSENT: Record<'opted_in' | 'opted_out' | 'unknown', { label: string; tone: Tone }> = fromDs(STATUS.consent);
 
-export const CONSENT_SOURCE: Record<string, string> = {
-  web_form: 'Formulário do site', checkout: 'Checkout / compra', whatsapp_inbound: 'Mandou mensagem no WhatsApp',
-  whatsapp_keyword: 'Palavra-chave no WhatsApp', opt_out_button: 'Botão de saída', import: 'Lista importada com opt-in',
-  api: 'API', support_request: 'Pedido ao atendimento', admin: 'Operador',
-};
+export const CONSENT_SOURCE: Record<string, string> = labels(STATUS.consentSource);
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ');

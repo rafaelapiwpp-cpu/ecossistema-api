@@ -19,7 +19,7 @@ const TONE: Record<Tone, string> = {
 export function Badge({ tone = 'neutral', children, dot, className }: { tone?: Tone; children: ReactNode; dot?: boolean; className?: string }) {
   return (
     <span className={cx('inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[11px] font-medium ring-1 ring-inset', TONE[tone], className)}>
-      {dot && <span className={cx('size-1.5 rounded-full bg-current', tone === 'accent' && 'pulse-dot')} />}
+      {dot && <span className="pulse-dot size-1.5 rounded-full bg-current" />}
       {children}
     </span>
   );
