@@ -97,3 +97,279 @@ model Template {
   @@index([clienteId])
   @@map("template")
 }
+
+// =============================================================================
+// Disparos & Fluxos (chat 5) — tabelas novas, nada acima foi alterado.
+//
+// Nomes e enums em inglês, iguais ao @eco/core (Lead, ConsentEvent,
+// CampaignStatus...), para não migrar duas vezes. `clienteId` = tenant; em v1
+// fica null (escopo único do operador, sem auth/RLS ainda — doc 04).
+// `numeroId`/`templateId` apontam para as tabelas de contingência sem FK por
+// enquanto (excluir número/template não pode quebrar o CRUD existente); a FK
+// composta (tenant_id, id) entra junto com o RLS.
+//
+// Opt-out por design: Lead.consent é a projeção do último ConsentEvent
+// (append-only). Campanha só envia para consent = opted_in; opted_out vence
+// tudo e importar contatos nunca reativa ninguém.
+// =============================================================================
+
+/// Contato do tenant. Único por telefone (E.164) dentro do tenant.
+model Lead {
+  id               String    @id @default(cuid())
+  clienteId        String?
+  phone            String
+  name             String    @default("")
+  tags             String[]  @default([])
+  attributes       Json      @default("{}")
+  /// opted_in | opted_out | unknown — projeção do último ConsentEvent
+  consent          String    @default("unknown")
+  /// web_form | checkout | whatsapp_inbound | whatsapp_keyword | opt_out_button | import | api | support_request | admin
+  consentSource    String?
+  consentChangedAt DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([clienteId, phone])
+  @@index([clienteId, consent])
+  @@map("lead")
+}
+
+/// Log imutável de consentimento. Nunca atualizar nem apagar.
+model ConsentEvent {
+  id          String   @id @default(cuid())
+  clienteId   String?
+  leadId      String?
+  phone       String
+  /// opted_in | opted_out
+  status      String
+  source      String
+  /// motivo / descrição da origem do opt-in
+  note        String?
+  /// texto que o contato mandou (ex.: "SAIR")
+  keyword     String?
+  waMessageId String?
+  campaignId  String?
+  flowRunId   String?
+  createdAt   DateTime @default(now())
+
+  @@index([clienteId, phone, createdAt])
+  @@index([clienteId, status, createdAt])
+  @@map("consent_event")
+}
+
+/// Fluxo de automação. O rascunho é editável; publicar cria uma FlowVersion imutável.
+model Flow {
+  id                 String        @id @default(cuid())
+  clienteId          String?
+  name               String
+  description        String?
+  /// draft | published | archived
+  status             String        @default("draft")
+  /// grafo { nodes, edges } — ver lib/disparos/domain/flow-types.ts
+  draftGraph         Json
+  publishedVersionId String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  versions           FlowVersion[]
+
+  @@index([clienteId, updatedAt])
+  @@map("flow")
+}
+
+model FlowVersion {
+  id          String   @id @default(cuid())
+  clienteId   String?
+  flowId      String
+  flow        Flow     @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  version     Int
+  graph       Json
+  publishedAt DateTime @default(now())
+
+  @@unique([flowId, version])
+  @@map("flow_version")
+}
+
+/// Disparo: um público, um número, uma versão de fluxo.
+model Campaign {
+  id              String              @id @default(cuid())
+  clienteId       String?
+  name            String
+  numeroId        String
+  flowId          String
+  flowVersionId   String
+  /// draft | scheduled | running | paused | completed | canceled | failed
+  status          String              @default("draft")
+  pauseReason     String?
+  /// freio temporário sem mudar o status (ex.: messaging_limit)
+  blockedReason   String?
+  /// { tags: string[], all?: boolean }
+  audience        Json
+  ratePerMinute   Int                 @default(60)
+  totalRecipients Int                 @default(0)
+  /// simulation | meta
+  provider        String              @default("simulation")
+  scheduledAt     DateTime?
+  startedAt       DateTime?
+  finishedAt      DateTime?
+  lastDispatchAt  DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  recipients      CampaignRecipient[]
+
+  @@index([status])
+  @@index([clienteId, createdAt])
+  @@map("campaign")
+}
+
+/// Público congelado na criação. Status do 1º envio + vínculo com a execução do fluxo.
+model CampaignRecipient {
+  id          String    @id @default(cuid())
+  clienteId   String?
+  campaignId  String
+  campaign    Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  leadId      String?
+  phone       String
+  name        String    @default("")
+  variables   Json      @default("{}")
+  /// pending | processing | accepted | sent | delivered | read | failed | skipped_optout | skipped_no_consent | skipped_invalid
+  status      String    @default("pending")
+  attempts    Int       @default(0)
+  flowRunId   String?
+  waMessageId String?
+  errorCode   Int?
+  errorTitle  String?
+  acceptedAt  DateTime?
+  sentAt      DateTime?
+  deliveredAt DateTime?
+  readAt      DateTime?
+  failedAt    DateTime?
+  updatedAt   DateTime  @default(now())
+
+  @@index([campaignId, status])
+  @@index([waMessageId])
+  @@map("campaign_recipient")
+}
+
+/// Execução do fluxo para um contato.
+model FlowRun {
+  id                  String    @id @default(cuid())
+  clienteId           String?
+  flowId              String
+  flowVersionId       String
+  campaignId          String?
+  campaignRecipientId String?
+  numeroId            String
+  leadId              String?
+  phone               String
+  /// active | waiting_delay | waiting_reply | completed | opted_out | failed | canceled
+  status              String
+  currentNodeId       String?
+  wakeAt              DateTime?
+  /// { vars, answers }
+  context             Json      @default("{}")
+  stepCount           Int       @default(0)
+  lastError           String?
+  startedAt           DateTime  @default(now())
+  finishedAt          DateTime?
+  updatedAt           DateTime  @default(now())
+
+  @@index([status, wakeAt])
+  @@index([clienteId, phone, status])
+  @@index([campaignId, status])
+  @@map("flow_run")
+}
+
+/// Trilha por etapa (funil da campanha).
+model FlowRunStep {
+  id         Int      @id @default(autoincrement())
+  clienteId  String?
+  runId      String
+  campaignId String?
+  nodeId     String
+  nodeType   String
+  outcome    String
+  messageId  String?
+  detail     Json?
+  createdAt  DateTime @default(now())
+
+  @@index([campaignId, nodeId, outcome])
+  @@index([runId])
+  @@map("flow_run_step")
+}
+
+/// Mensagem enviada ou recebida (espelha a Cloud API).
+model Message {
+  id                    String    @id @default(cuid())
+  clienteId             String?
+  numeroId              String
+  leadId                String?
+  phone                 String
+  /// in | out
+  direction             String
+  waMessageId           String?   @unique
+  type                  String
+  payload               Json
+  preview               String    @default("")
+  /// queued | accepted | sent | delivered | read | played | failed | received
+  status                String
+  statusRank            Int       @default(0)
+  campaignId            String?
+  flowRunId             String?
+  nodeId                String?
+  bizOpaqueCallbackData String?
+  errorCode             Int?
+  errorTitle            String?
+  pricingCategory       String?
+  pricingType           String?
+  createdAt             DateTime  @default(now())
+  sentAt                DateTime?
+  deliveredAt           DateTime?
+  readAt                DateTime?
+  failedAt              DateTime?
+
+  @@index([clienteId, phone, createdAt])
+  @@index([numeroId, direction, type, createdAt])
+  @@map("message")
+}
+
+/// Idempotência dos webhooks de status (a Meta reenvia).
+model MessageStatusEvent {
+  waMessageId String
+  status      String
+  createdAt   DateTime @default(now())
+
+  @@id([waMessageId, status])
+  @@map("message_status_event")
+}
+
+/// Última mensagem recebida do contato por número: janela de atendimento de 24 h.
+model ServiceWindow {
+  numeroId      String
+  phone         String
+  lastInboundAt DateTime
+
+  @@id([numeroId, phone])
+  @@map("service_window")
+}
+
+/// Webhooks a processar. source = meta (recebido) | simulation (agendado pelo simulador).
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  source      String
+  dueAt       DateTime  @default(now())
+  payload     Json
+  processedAt DateTime?
+  error       String?
+  createdAt   DateTime  @default(now())
+
+  @@index([processedAt, dueAt])
+  @@map("webhook_event")
+}
+
+/// Trava do worker (lease): garante um tick por vez entre instâncias serverless.
+model WorkerLease {
+  name  String   @id
+  until DateTime
+
+  @@map("worker_lease")
+}
