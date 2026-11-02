@@ -24,3 +24,45 @@ jobs:
       # coisa de deploy (Vercel). Aqui só gera o cliente e compila.
       - name: Build admin
         run: npx -w @eco/admin prisma generate && npm exec -w @eco/admin -- next build
+
+  # Isolamento multi-tenant (doc 04 §3): RLS/FORCE sobre o schema REAL do Prisma.
+  # O dono das tabelas não é superusuário, como no Neon; PR que quebra isto não entra.
+  rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar
+        run: npm install --no-audit --no-fund
+      - name: Dono das tabelas sem superusuário
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 \
+            -c "CREATE ROLE eco_owner LOGIN PASSWORD 'eco' NOSUPERUSER NOBYPASSRLS CREATEROLE" \
+            -c "CREATE DATABASE eco OWNER eco_owner"
+      - name: Schema + seed + SQL do build (2x) + teste de isolamento
+        working-directory: apps/admin
+        env:
+          DATABASE_URL: postgresql://eco_owner:eco@localhost:5432/eco
+          DATABASE_URL_UNPOOLED: postgresql://eco_owner:eco@localhost:5432/eco
+        run: |
+          npx prisma db push --skip-generate
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f prisma/sql/testes/seed.sql
+          node scripts/aplicar-sql.cjs
+          node scripts/aplicar-sql.cjs
+          cd prisma/sql/testes
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f isolamento.sql 2>&1 | tee saida.txt
+          if grep -q "FALHA\|ERROR" saida.txt; then exit 1; fi
+          test "$(grep -c 'OK [0-9]' saida.txt)" -ge 18

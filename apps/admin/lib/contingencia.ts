@@ -34,7 +34,8 @@ export const BM_VERIFICACAO_MAP = index(BM_VERIFICACAO);
 
 export const NIVEL_LIMITE: { value: number; label: string }[] = [
   { value: 250, label: "250 / dia" },
-  { value: 1000, label: "1 mil / dia" },
+  { value: 1000, label: "1 mil / dia (nível antigo)" },
+  { value: 2000, label: "2 mil / dia" },
   { value: 10000, label: "10 mil / dia" },
   { value: 100000, label: "100 mil / dia" },
   { value: 0, label: "Ilimitado" },

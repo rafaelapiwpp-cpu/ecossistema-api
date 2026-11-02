@@ -7,11 +7,13 @@ import { NUMERO_STATUS_MAP, QUALIDADE_MAP } from "@/lib/contingencia";
 import { formatInt } from "@/lib/format";
 import { deleteNumero } from "./actions";
 import s from "@/components/ui/crud.module.css";
+import { exigirOperador } from "@/lib/auth/sessao";
 
 export const metadata = { title: "Números" };
 export const dynamic = "force-dynamic";
 
 export default async function NumerosPage() {
+  await exigirOperador("contingencia:ver");
   const numeros = await prisma.numero.findMany({
     orderBy: { criadoEm: "desc" },
     include: { bm: { select: { nome: true } } },
@@ -45,6 +47,7 @@ export default async function NumerosPage() {
                     <th>BM</th>
                     <th>Status</th>
                     <th>Qualidade</th>
+                    <th>Envio</th>
                     <th>Uso hoje</th>
                     <th>Ações</th>
                   </tr>
@@ -59,6 +62,15 @@ export default async function NumerosPage() {
                         <td>{n.bm?.nome ?? "—"}</td>
                         <td>{st ? <StatusTag tone={st.tone} icon={st.icon}>{st.label}</StatusTag> : n.status}</td>
                         <td>{q ? <StatusTag tone={q.tone} icon={q.icon}>{q.label}</StatusTag> : n.qualidade}</td>
+                        <td>
+                          {n.disjuntor === "fechado" ? (
+                            <StatusTag tone="good" icon="operational">Enviando</StatusTag>
+                          ) : n.disjuntor === "meio_aberto" ? (
+                            <StatusTag tone="warning" icon="warning">Em teste</StatusTag>
+                          ) : (
+                            <StatusTag tone="critical" icon="pause">Parado</StatusTag>
+                          )}
+                        </td>
                         <td className={s.mono}>{formatInt(n.enviadasHoje)}{n.limiteDiario ? ` / ${formatInt(n.limiteDiario)}` : ""}</td>
                         <td>
                           <span className={s.rowActions}>

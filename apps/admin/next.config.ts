@@ -5,6 +5,21 @@ const config: NextConfig = {
   transpilePackages: ["@eco/core", "@eco/tokens"],
   reactStrictMode: true,
   poweredByHeader: false,
+  // Cabeçalhos de segurança em todas as respostas do painel.
+  async headers() {
+    return [
+      {
+        source: "/((?!_next/static|_next/image).*)",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "same-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
+    ];
+  },
 };
 
 export default config;

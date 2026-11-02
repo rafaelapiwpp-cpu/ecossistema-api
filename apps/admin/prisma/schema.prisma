@@ -2,11 +2,11 @@
 // Neon Postgres (plano Free) conectado via Vercel. DATABASE_URL = pooled
 // (pgbouncer) para a app; DATABASE_URL_UNPOOLED = conexão direta para migrações.
 //
-// Nota de arquitetura: este é o primeiro pedaço real de persistência do
-// ecossistema (contingência). Os estados seguem o doc 04 (Segurança &
-// Contingência). Multi-tenant/RLS/auth completos entram quando o portal do
-// cliente for exposto; v1 é a ferramenta do operador para cadastrar sua
-// própria contingência.
+// Segurança (doc 04): o Prisma cria tabelas e colunas; RLS (ENABLE + FORCE),
+// papéis, triggers e auditoria append-only moram em prisma/sql/*.sql, aplicados
+// no build depois do `db push` por scripts/aplicar-sql.cjs. Toda consulta do
+// painel passa por lib/db.ts, que declara o escopo (sem ele o banco devolve
+// zero linhas).
 
 generator client {
   provider = "prisma-client-js"
@@ -26,6 +26,12 @@ model Cliente {
   plano     String     @default("starter") // starter | pro | scale | enterprise
   status    String     @default("ativo")   // ativo | trial | suspenso | inadimplente | cancelado
   notas     String?
+  /// Teto de permissões do cliente (catálogo TENANT do @eco/core/security). Vazio = padrão do plano.
+  entitlements String[] @default([])
+  /// Cotas: { maxUsuarios, maxNumeros, maxContatosDia, exportMaxLinhas }
+  limites   Json       @default("{}")
+  /// Incrementa a cada mudança de entitlements/limites: sessões do portal recarregam.
+  permVersion Int      @default(1)
   criadoEm  DateTime   @default(now())
   atualizadoEm DateTime @updatedAt
   bms       Bm[]
@@ -48,6 +54,7 @@ model Bm {
   // nível de limite 24h do portfólio (usuários únicos)
   nivelLimite  Int      @default(250) // 250 | 1000 | 10000 | 100000 (0 = ilimitado)
   metaBmId     String?  // ID do portfólio na Meta (quando conectar via app)
+  metaWabaId   String?  // WABA ID: chave dos webhooks account_update / account_review_update
   notas        String?
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
@@ -71,7 +78,11 @@ model Numero {
   qualidade    String   @default("sem_avaliacao")
   enviadasHoje Int      @default(0)
   limiteDiario Int      @default(0)
-  metaPhoneId  String?  // phone_number_id da Meta (quando conectar)
+  metaPhoneId  String?  @unique // phone_number_id da Meta: roteia webhooks ao número (e ao cliente)
+  /// Disjuntor (doc 04 §4.2): fechado (envia) | aberto (parado) | meio_aberto (teste após liberação manual)
+  disjuntor    String   @default("fechado")
+  /// Por que o envio está parado (preenchido pelo motor de contingência ou pelo operador)
+  motivoPausa  String?
   notas        String?
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
@@ -91,9 +102,129 @@ model Template {
   status       String   @default("em_analise") // aprovado | em_analise | rejeitado | pausado | desativado
   idioma       String   @default("pt_BR")
   corpo        String
+  /// Qualidade do template na Meta: alta | media | baixa | sem_avaliacao
+  qualidade    String   @default("sem_avaliacao")
+  metaTemplateId String? @unique // id do template na Meta: chave dos webhooks de template
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
   @@index([clienteId])
   @@map("template")
+}
+
+/* ------------------------------------------------------------------ */
+/* Segurança: operadores da plataforma, sessões, auditoria             */
+/* ------------------------------------------------------------------ */
+
+/// Pessoa que opera o painel admin (escopo PLATFORM do doc 04).
+model Operador {
+  id                 String    @id @default(cuid())
+  login              String    @unique
+  nome               String
+  /// PLATFORM_OWNER | PLATFORM_CONTINGENCIA | PLATFORM_SUPORTE
+  papel              String    @default("PLATFORM_CONTINGENCIA")
+  grants             String[]  @default([])
+  denies             String[]  @default([])
+  /// scrypt versionado (lib/auth/senha.ts)
+  senhaHash          String
+  precisaTrocarSenha Boolean   @default(true)
+  ativo              Boolean   @default(true)
+  /// Incrementa ao trocar senha/papel/permissões: todas as sessões abertas caem.
+  permVersion        Int       @default(1)
+  falhasLogin        Int       @default(0)
+  bloqueadoAte       DateTime?
+  ultimoLoginEm      DateTime?
+  /// Segredo TOTP cifrado (2FA obrigatório no escopo PLATFORM — próximo passo)
+  mfaSegredo         String?
+  criadoEm           DateTime  @default(now())
+  atualizadoEm       DateTime  @updatedAt
+  sessoes            Sessao[]
+
+  @@map("operador")
+}
+
+/// Sessão do painel. O id é o SHA-256 do token do cookie: o banco nunca guarda o token.
+model Sessao {
+  id          String   @id
+  operadorId  String
+  operador    Operador @relation(fields: [operadorId], references: [id], onDelete: Cascade)
+  permVersion Int
+  criadaEm    DateTime @default(now())
+  ultimoUsoEm DateTime @default(now())
+  expiraEm    DateTime
+  ip          String?
+  userAgent   String?
+
+  @@index([operadorId])
+  @@index([expiraEm])
+  @@map("sessao")
+}
+
+/// Trilha append-only (trigger em prisma/sql/001_rls.sql bloqueia UPDATE/DELETE).
+/// Sem FK de propósito: apagar operador ou cliente não apaga a história.
+model AuditLog {
+  id            BigInt   @id @default(autoincrement())
+  em            DateTime @default(now())
+  /// PLATFORM | TENANT | SISTEMA
+  escopo        String
+  operadorId    String?
+  clienteId     String?
+  acao          String
+  alvo          String?
+  ip            String?
+  viaBreakglass Boolean  @default(false)
+  detalhes      Json     @default("{}")
+
+  @@index([acao, ip, em])
+  @@index([clienteId, em])
+  @@map("audit_log")
+}
+
+/* ------------------------------------------------------------------ */
+/* Contingência: motor de regras (@eco/core/contingency)               */
+/* ------------------------------------------------------------------ */
+
+/// Cada sinal avaliado (webhook da Meta ou registro manual) e o que o motor fez.
+model EventoContingencia {
+  id         String    @id @default(cuid())
+  em         DateTime  @default(now())
+  /// webhook | manual | regra
+  origem     String
+  /// qualidade | erro | template_status | conta | taxas_campanha
+  tipo       String
+  /// info | aviso | critico
+  severidade String    @default("info")
+  texto      String
+  clienteId  String?
+  bmId       String?
+  numeroId   String?
+  templateId String?
+  sinal      Json
+  acoes      Json      @default("[]")
+  resolvidoEm DateTime?
+
+  @@index([em])
+  @@index([clienteId, em])
+  @@index([numeroId, em])
+  @@map("evento_contingencia")
+}
+
+/// Corpo bruto de webhook já processado (idempotência: a Meta reenvia).
+model WebhookEvento {
+  id         String   @id // SHA-256 do corpo
+  recebidoEm DateTime @default(now())
+  campos     String[] @default([])
+  corpo      Json
+
+  @@index([recebidoEm])
+  @@map("webhook_evento")
+}
+
+/// Marcadores de uma vez só (ex.: bootstrap do primeiro operador).
+model SistemaFlag {
+  chave String   @id
+  valor String
+  em    DateTime @default(now())
+
+  @@map("sistema_flag")
 }

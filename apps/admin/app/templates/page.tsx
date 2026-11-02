@@ -6,11 +6,13 @@ import { prisma } from "@/lib/db";
 import { TEMPLATE_STATUS_MAP, TEMPLATE_CATEGORIA_MAP } from "@/lib/contingencia";
 import { deleteTemplate } from "./actions";
 import s from "@/components/ui/crud.module.css";
+import { exigirOperador } from "@/lib/auth/sessao";
 
 export const metadata = { title: "Templates" };
 export const dynamic = "force-dynamic";
 
 export default async function TemplatesPage() {
+  await exigirOperador("contingencia:ver");
   const templates = await prisma.template.findMany({
     orderBy: { criadoEm: "desc" },
     include: { cliente: { select: { nome: true } } },

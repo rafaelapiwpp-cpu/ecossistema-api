@@ -175,6 +175,42 @@ a.navItem:hover {
   color: var(--ink-3);
 }
 
+a.accountName {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.accountName:hover {
+  text-decoration: underline;
+}
+
+.accountExit {
+  margin-left: auto;
+}
+
+.exitButton {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.exitButton:hover {
+  background: var(--bg-raised);
+  color: var(--text-primary);
+}
+
+.exitButton:focus-visible,
+a.accountName:focus-visible {
+  outline: 2px solid var(--brand-ring);
+  outline-offset: 2px;
+}
+
 /* ---------- Conteúdo ---------- */
 
 .main {
@@ -211,8 +247,15 @@ a.navItem:hover {
 
   .navGroupLabel,
   .navItemSoon,
-  .account,
+  .avatar,
+  .accountText,
   .brandScope {
     display: none;
+  }
+
+  .account {
+    padding: 0;
+    border-top: 0;
+    flex-shrink: 0;
   }
 }

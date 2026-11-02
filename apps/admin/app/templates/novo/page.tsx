@@ -4,11 +4,13 @@ import { Icon } from "@/components/ui/Icon";
 import { prisma } from "@/lib/db";
 import { TemplateForm } from "../TemplateForm";
 import s from "@/components/ui/crud.module.css";
+import { exigirOperador } from "@/lib/auth/sessao";
 
 export const metadata = { title: "Novo template" };
 export const dynamic = "force-dynamic";
 
 export default async function NovoTemplatePage() {
+  await exigirOperador("contingencia:ver");
   const clientes = await prisma.cliente.findMany({ orderBy: { nome: "asc" }, select: { id: true, nome: true } });
 
   return (

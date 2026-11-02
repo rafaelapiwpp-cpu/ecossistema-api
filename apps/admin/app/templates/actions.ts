@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { auditar, exigirOperador } from "@/lib/auth/sessao";
 
 function str(v: FormDataEntryValue | null): string {
   return typeof v === "string" ? v.trim() : "";
@@ -13,6 +14,7 @@ function orNull(v: FormDataEntryValue | null): string | null {
 }
 
 export async function saveTemplate(formData: FormData) {
+  const op = await exigirOperador("templates:moderar");
   const id = str(formData.get("id"));
   const nome = str(formData.get("nome"));
   const corpo = str(formData.get("corpo"));
@@ -30,8 +32,10 @@ export async function saveTemplate(formData: FormData) {
 
   if (id) {
     await prisma.template.update({ where: { id }, data });
+    await auditar("template.editar", { operadorId: op.id, alvo: id, detalhes: data });
   } else {
-    await prisma.template.create({ data });
+    const novo = await prisma.template.create({ data });
+    await auditar("template.criar", { operadorId: op.id, alvo: novo.id, detalhes: data });
   }
 
   revalidatePath("/templates");
@@ -39,9 +43,11 @@ export async function saveTemplate(formData: FormData) {
 }
 
 export async function deleteTemplate(formData: FormData) {
+  const op = await exigirOperador("templates:moderar");
   const id = str(formData.get("id"));
   if (id) {
     await prisma.template.delete({ where: { id } });
+    await auditar("template.excluir", { operadorId: op.id, alvo: id });
     revalidatePath("/templates");
   }
   redirect("/templates");

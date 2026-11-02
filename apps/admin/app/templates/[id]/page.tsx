@@ -6,11 +6,13 @@ import { prisma } from "@/lib/db";
 import { TemplateForm } from "../TemplateForm";
 import { deleteTemplate } from "../actions";
 import s from "@/components/ui/crud.module.css";
+import { exigirOperador } from "@/lib/auth/sessao";
 
 export const metadata = { title: "Editar template" };
 export const dynamic = "force-dynamic";
 
 export default async function EditarTemplatePage({ params }: { params: Promise<{ id: string }> }) {
+  await exigirOperador("contingencia:ver");
   const { id } = await params;
   const [template, clientes] = await Promise.all([
     prisma.template.findUnique({ where: { id } }),

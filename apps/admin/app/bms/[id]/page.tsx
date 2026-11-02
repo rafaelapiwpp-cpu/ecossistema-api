@@ -6,11 +6,13 @@ import { prisma } from "@/lib/db";
 import { BmForm } from "../BmForm";
 import { deleteBm } from "../actions";
 import s from "@/components/ui/crud.module.css";
+import { exigirOperador } from "@/lib/auth/sessao";
 
 export const metadata = { title: "Editar BM" };
 export const dynamic = "force-dynamic";
 
 export default async function EditarBmPage({ params }: { params: Promise<{ id: string }> }) {
+  await exigirOperador("contingencia:ver");
   const { id } = await params;
   const [bm, clientes] = await Promise.all([
     prisma.bm.findUnique({ where: { id } }),

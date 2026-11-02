@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 3000",
-    "build": "prisma generate && prisma db push --skip-generate --accept-data-loss && next build",
+    "build": "prisma generate && prisma db push --skip-generate --accept-data-loss && node scripts/aplicar-sql.cjs && next build",
     "start": "next start --port 3000",
     "typecheck": "tsc --noEmit",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:sql": "node scripts/aplicar-sql.cjs"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"

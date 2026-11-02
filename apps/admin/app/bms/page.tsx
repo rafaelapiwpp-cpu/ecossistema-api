@@ -6,11 +6,13 @@ import { prisma } from "@/lib/db";
 import { BM_STATUS_MAP, BM_VERIFICACAO_MAP, nivelLabel } from "@/lib/contingencia";
 import { deleteBm } from "./actions";
 import s from "@/components/ui/crud.module.css";
+import { exigirOperador } from "@/lib/auth/sessao";
 
 export const metadata = { title: "Business Managers" };
 export const dynamic = "force-dynamic";
 
 export default async function BmsPage() {
+  await exigirOperador("contingencia:ver");
   const bms = await prisma.bm.findMany({
     orderBy: { criadoEm: "desc" },
     include: { cliente: { select: { nome: true } }, _count: { select: { numeros: true } } },
