@@ -1,9 +1,8 @@
 import Link from "next/link";
+import { BackLabel, Page, PageHeader } from "@eco/ui";
 import { AppShell } from "@/components/shell/AppShell";
-import { Icon } from "@/components/ui/Icon";
 import { prisma } from "@/lib/db";
 import { BmForm } from "../BmForm";
-import s from "@/components/ui/crud.module.css";
 
 export const metadata = { title: "Nova BM" };
 export const dynamic = "force-dynamic";
@@ -13,17 +12,17 @@ export default async function NovaBmPage() {
 
   return (
     <AppShell>
-      <div className={s.page}>
-        <div className={s.header}>
-          <div>
-            <Link href="/bms" className={s.link}><Icon name="arrowUp" size={13} style={{ transform: "rotate(-90deg)" }} /> Business Managers</Link>
-            <h1 className={s.title} style={{ marginTop: 4 }}>Nova BM</h1>
-          </div>
-        </div>
-        <div className={s.panel}>
-          <BmForm clientes={clientes} />
-        </div>
-      </div>
+      <Page narrow>
+        <PageHeader
+          title="Nova BM"
+          back={
+            <Link href="/bms" className="eco-back">
+              <BackLabel>Business Managers</BackLabel>
+            </Link>
+          }
+        />
+        <BmForm clientes={clientes} />
+      </Page>
     </AppShell>
   );
 }

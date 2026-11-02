@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { buttonClass, Card, Field, Form, FormActions, Select, Textarea, TextInput } from "@eco/ui";
 import { saveBm } from "./actions";
 import { BM_STATUS, BM_VERIFICACAO, NIVEL_LIMITE } from "@/lib/contingencia";
-import s from "@/components/ui/crud.module.css";
 
 export interface BmDefaults {
   id?: string;
@@ -16,78 +16,77 @@ export interface BmDefaults {
   notas?: string | null;
 }
 
-export function BmForm({
-  bm,
-  clientes,
-}: {
-  bm?: BmDefaults;
-  clientes: { id: string; nome: string }[];
-}) {
+export function BmForm({ bm, clientes }: { bm?: BmDefaults; clientes: { id: string; nome: string }[] }) {
   return (
-    <form action={saveBm} className={s.form}>
-      {bm?.id && <input type="hidden" name="id" value={bm.id} />}
+    <Card flush>
+      <Form action={saveBm}>
+        {bm?.id && <input type="hidden" name="id" value={bm.id} />}
 
-      <div className={`${s.field} ${s.fieldWide}`}>
-        <label className={s.label} htmlFor="nome">Nome da BM</label>
-        <input id="nome" name="nome" required defaultValue={bm?.nome ?? ""} placeholder="Ex.: BM MOVY 2" className={s.input} />
-      </div>
+        <Field label="Nome da BM" htmlFor="nome" wide>
+          <TextInput id="nome" name="nome" required defaultValue={bm?.nome ?? ""} placeholder="Ex.: BM Imobiliária Horizonte" />
+        </Field>
 
-      <div className={s.field}>
-        <label className={s.label} htmlFor="clienteId">Cliente</label>
-        <select id="clienteId" name="clienteId" defaultValue={bm?.clienteId ?? ""} className={s.select}>
-          <option value="">— sem cliente —</option>
-          {clientes.map((c) => (
-            <option key={c.id} value={c.id}>{c.nome}</option>
-          ))}
-        </select>
-        <span className={s.hint}>1 BM por cliente (pode deixar em branco por enquanto).</span>
-      </div>
+        <Field label="Cliente" htmlFor="clienteId" help="Cada cliente tem o próprio portfólio. Pode deixar em branco por enquanto.">
+          <Select id="clienteId" name="clienteId" defaultValue={bm?.clienteId ?? ""} hasHelp>
+            <option value="">Sem cliente</option>
+            {clientes.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nome}
+              </option>
+            ))}
+          </Select>
+        </Field>
 
-      <div className={s.field}>
-        <label className={s.label} htmlFor="nivelLimite">Nível de limite (24h)</label>
-        <select id="nivelLimite" name="nivelLimite" defaultValue={String(bm?.nivelLimite ?? 250)} className={s.select}>
-          {NIVEL_LIMITE.map((n) => (
-            <option key={n.value} value={n.value}>{n.label}</option>
-          ))}
-        </select>
-      </div>
+        <Field label="Limite de 24 h" htmlFor="nivelLimite" help="Contatos únicos por dia, compartilhados por todos os números da BM.">
+          <Select id="nivelLimite" name="nivelLimite" defaultValue={String(bm?.nivelLimite ?? 250)} hasHelp>
+            {NIVEL_LIMITE.map((n) => (
+              <option key={n.value} value={n.value}>
+                {n.label}
+              </option>
+            ))}
+          </Select>
+        </Field>
 
-      <div className={s.field}>
-        <label className={s.label} htmlFor="status">Status</label>
-        <select id="status" name="status" defaultValue={bm?.status ?? "em_verificacao"} className={s.select}>
-          {BM_STATUS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-      </div>
+        <Field label="Status" htmlFor="status">
+          <Select id="status" name="status" defaultValue={bm?.status ?? "em_verificacao"}>
+            {BM_STATUS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+        </Field>
 
-      <div className={s.field}>
-        <label className={s.label} htmlFor="verificacao">Verificação de negócio</label>
-        <select id="verificacao" name="verificacao" defaultValue={bm?.verificacao ?? "pendente"} className={s.select}>
-          {BM_VERIFICACAO.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-      </div>
+        <Field label="Verificação de negócio" htmlFor="verificacao">
+          <Select id="verificacao" name="verificacao" defaultValue={bm?.verificacao ?? "pendente"}>
+            {BM_VERIFICACAO.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+        </Field>
 
-      <div className={`${s.field} ${s.fieldWide}`}>
-        <label className={s.label} htmlFor="metaBmId">ID do portfólio na Meta (opcional)</label>
-        <input id="metaBmId" name="metaBmId" defaultValue={bm?.metaBmId ?? ""} placeholder="Preencher ao conectar via app" className={s.input} />
-      </div>
+        <Field label="ID do portfólio na Meta" htmlFor="metaBmId" optional wide help="Preenchido ao conectar pelo app da Meta.">
+          <TextInput id="metaBmId" name="metaBmId" defaultValue={bm?.metaBmId ?? ""} placeholder="Ex.: 104829301928374" mono hasHelp />
+        </Field>
 
-      <div className={`${s.field} ${s.fieldWide}`}>
-        <label className={s.label} htmlFor="notas">Notas</label>
-        <textarea id="notas" name="notas" defaultValue={bm?.notas ?? ""} placeholder="Observações internas sobre esta BM" className={s.textarea} />
-      </div>
+        <Field label="Notas" htmlFor="notas" optional wide>
+          <Textarea id="notas" name="notas" defaultValue={bm?.notas ?? ""} placeholder="Observações internas sobre esta BM" />
+        </Field>
 
-      <div className={s.formActions}>
-        <Link href="/bms" className={s.btn}>Cancelar</Link>
-        <div className={s.formActionsRight}>
-          <button type="submit" className={`${s.btn} ${s.btnPrimary}`}>
+        <FormActions
+          start={
+            <Link href="/bms" className={buttonClass({ variant: "ghost" })}>
+              Cancelar
+            </Link>
+          }
+        >
+          <button type="submit" className={buttonClass({ variant: "primary" })}>
             {bm?.id ? "Salvar alterações" : "Cadastrar BM"}
           </button>
-        </div>
-      </div>
-    </form>
+        </FormActions>
+      </Form>
+    </Card>
   );
 }

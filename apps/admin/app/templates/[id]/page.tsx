@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BackLabel, ConfirmAction, Page, PageHeader } from "@eco/ui";
 import { AppShell } from "@/components/shell/AppShell";
-import { Icon } from "@/components/ui/Icon";
 import { prisma } from "@/lib/db";
 import { TemplateForm } from "../TemplateForm";
 import { deleteTemplate } from "../actions";
-import s from "@/components/ui/crud.module.css";
 
 export const metadata = { title: "Editar template" };
 export const dynamic = "force-dynamic";
@@ -20,34 +19,31 @@ export default async function EditarTemplatePage({ params }: { params: Promise<{
 
   return (
     <AppShell>
-      <div className={s.page}>
-        <div className={s.header}>
-          <div>
-            <Link href="/templates" className={s.link}><Icon name="arrowUp" size={13} style={{ transform: "rotate(-90deg)" }} /> Templates</Link>
-            <h1 className={s.title} style={{ marginTop: 4 }}>{template.nome}</h1>
-          </div>
-          <form action={deleteTemplate}>
-            <input type="hidden" name="id" value={template.id} />
-            <button type="submit" className={`${s.btn} ${s.btnDanger}`}>
-              <Icon name="x" size={15} /> Excluir
-            </button>
-          </form>
-        </div>
-        <div className={s.panel}>
-          <TemplateForm
-            clientes={clientes}
-            template={{
-              id: template.id,
-              nome: template.nome,
-              clienteId: template.clienteId,
-              categoria: template.categoria,
-              status: template.status,
-              idioma: template.idioma,
-              corpo: template.corpo,
-            }}
-          />
-        </div>
-      </div>
+      <Page>
+        <PageHeader
+          title={template.nome}
+          back={
+            <Link href="/templates" className="eco-back">
+              <BackLabel>Templates</BackLabel>
+            </Link>
+          }
+          actions={
+            <ConfirmAction action={deleteTemplate} fields={{ id: template.id }} target={template.nome} label="Excluir template" confirmLabel="Excluir" look="button" size="md" />
+          }
+        />
+        <TemplateForm
+          clientes={clientes}
+          template={{
+            id: template.id,
+            nome: template.nome,
+            clienteId: template.clienteId,
+            categoria: template.categoria,
+            status: template.status,
+            idioma: template.idioma,
+            corpo: template.corpo,
+          }}
+        />
+      </Page>
     </AppShell>
   );
 }

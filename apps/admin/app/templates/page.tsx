@@ -1,84 +1,79 @@
 import Link from "next/link";
+import { buttonClass, Cell2, ConfirmAction, DataTable, EmptyState, Page, PageHeader, RowActions, StatusBadge, Tag, type Column } from "@eco/ui";
 import { AppShell } from "@/components/shell/AppShell";
-import { StatusTag } from "@/components/ui/StatusTag";
 import { Icon } from "@/components/ui/Icon";
 import { prisma } from "@/lib/db";
-import { TEMPLATE_STATUS_MAP, TEMPLATE_CATEGORIA_MAP } from "@/lib/contingencia";
+import { TEMPLATE_CATEGORIA_MAP } from "@/lib/contingencia";
+import { formatInt } from "@/lib/format";
 import { deleteTemplate } from "./actions";
-import s from "@/components/ui/crud.module.css";
 
 export const metadata = { title: "Templates" };
 export const dynamic = "force-dynamic";
 
-export default async function TemplatesPage() {
-  const templates = await prisma.template.findMany({
+async function load() {
+  return prisma.template.findMany({
     orderBy: { criadoEm: "desc" },
     include: { cliente: { select: { nome: true } } },
   });
+}
+type Row = Awaited<ReturnType<typeof load>>[number];
+
+const columns: Column<Row>[] = [
+  { id: "template", header: "Template", cell: (t) => <Cell2 primary={t.nome} secondary={t.corpo} /> },
+  { id: "cliente", header: "Cliente", kind: "secondary", cell: (t) => t.cliente?.nome ?? "—" },
+  { id: "categoria", header: "Categoria", kind: "secondary", cell: (t) => TEMPLATE_CATEGORIA_MAP[t.categoria] ?? t.categoria },
+  { id: "status", header: "Status", cell: (t) => <StatusBadge domain="contingencyTemplate" value={t.status} size="sm" /> },
+  { id: "idioma", header: "Idioma", cell: (t) => <Tag>{t.idioma}</Tag> },
+  {
+    id: "acoes",
+    header: "",
+    kind: "actions",
+    cell: (t) => (
+      <RowActions>
+        <Link href={`/templates/${t.id}`} className={buttonClass({ variant: "ghost", size: "sm" })}>
+          Editar
+        </Link>
+        <ConfirmAction action={deleteTemplate} fields={{ id: t.id }} target={t.nome} />
+      </RowActions>
+    ),
+  },
+];
+
+export default async function TemplatesPage() {
+  const templates = await load();
 
   return (
     <AppShell>
-      <div className={s.page}>
-        <div className={s.header}>
-          <div>
-            <h1 className={s.title}>Templates</h1>
-            <p className={s.sub}>{templates.length} template(s) cadastrado(s) · dados salvos no banco</p>
-          </div>
-          <Link href="/templates/novo" className={`${s.btn} ${s.btnPrimary}`}>
-            <Icon name="template" size={16} /> Novo template
-          </Link>
-        </div>
-
-        <div className={s.panel}>
-          {templates.length === 0 ? (
-            <div className={s.empty}>
-              <p className={s.emptyTitle}>Nenhum template cadastrado ainda</p>
-              <p>Cadastre os modelos de mensagem (HSM) da sua operação.</p>
-            </div>
-          ) : (
-            <div className={s.scroll}>
-              <table className={s.table}>
-                <thead>
-                  <tr>
-                    <th>Template</th>
-                    <th>Cliente</th>
-                    <th>Categoria</th>
-                    <th>Status</th>
-                    <th>Idioma</th>
-                    <th>Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {templates.map((t) => {
-                    const st = TEMPLATE_STATUS_MAP[t.status];
-                    return (
-                      <tr key={t.id}>
-                        <td>
-                          <span className={s.name}>{t.nome}</span>
-                          <span style={{ display: "block", fontSize: "12px", color: "var(--ink-3)", maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.corpo}</span>
-                        </td>
-                        <td>{t.cliente?.nome ?? "—"}</td>
-                        <td>{TEMPLATE_CATEGORIA_MAP[t.categoria] ?? t.categoria}</td>
-                        <td>{st ? <StatusTag tone={st.tone} icon={st.icon}>{st.label}</StatusTag> : t.status}</td>
-                        <td className={s.mono}>{t.idioma}</td>
-                        <td>
-                          <span className={s.rowActions}>
-                            <Link href={`/templates/${t.id}`} className={s.link}>Editar</Link>
-                            <form action={deleteTemplate}>
-                              <input type="hidden" name="id" value={t.id} />
-                              <button type="submit" className={`${s.link} ${s.linkDanger}`}>Excluir</button>
-                            </form>
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
+      <Page>
+        <PageHeader
+          title="Templates"
+          subtitle={templates.length === 1 ? "1 template cadastrado" : `${formatInt(templates.length)} templates cadastrados`}
+          actions={
+            <Link href="/templates/novo" className={buttonClass({ variant: "primary" })}>
+              <Icon name="template" size={16} /> Novo template
+            </Link>
+          }
+        />
+        <DataTable
+          caption="Templates de mensagem"
+          columns={columns}
+          rows={templates}
+          rowKey={(t) => t.id}
+          empty={
+            <EmptyState
+              icon={<Icon name="template" size={20} />}
+              title="Nenhum template cadastrado"
+              action={
+                <Link href="/templates/novo" className={buttonClass({ variant: "primary" })}>
+                  Cadastrar template
+                </Link>
+              }
+            >
+              Cadastre os templates aprovados de cada cliente para acompanhar status e pausas da Meta.
+            </EmptyState>
+          }
+        />
+      </Page>
     </AppShell>
   );
 }

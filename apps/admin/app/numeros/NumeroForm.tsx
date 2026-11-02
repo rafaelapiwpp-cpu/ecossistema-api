@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { buttonClass, Card, Field, Form, FormActions, FormSection, Select, Textarea, TextInput } from "@eco/ui";
 import { saveNumero } from "./actions";
 import { NUMERO_STATUS, QUALIDADE } from "@/lib/contingencia";
-import s from "@/components/ui/crud.module.css";
 
 export interface NumeroDefaults {
   id?: string;
@@ -17,79 +17,77 @@ export interface NumeroDefaults {
   notas?: string | null;
 }
 
-export function NumeroForm({
-  numero,
-  bms,
-}: {
-  numero?: NumeroDefaults;
-  bms: { id: string; nome: string }[];
-}) {
+export function NumeroForm({ numero, bms }: { numero?: NumeroDefaults; bms: { id: string; nome: string }[] }) {
   return (
-    <form action={saveNumero} className={s.form}>
-      {numero?.id && <input type="hidden" name="id" value={numero.id} />}
+    <Card flush>
+      <Form action={saveNumero}>
+        {numero?.id && <input type="hidden" name="id" value={numero.id} />}
 
-      <div className={s.field}>
-        <label className={s.label} htmlFor="telefone">Telefone</label>
-        <input id="telefone" name="telefone" required defaultValue={numero?.telefone ?? ""} placeholder="+55 18 99200-5351" className={s.input} />
-      </div>
+        <Field label="Telefone" htmlFor="telefone" help="Com DDI e DDD, como no WhatsApp.">
+          <TextInput id="telefone" name="telefone" required inputMode="tel" defaultValue={numero?.telefone ?? ""} placeholder="+55 18 99200-5351" hasHelp />
+        </Field>
 
-      <div className={s.field}>
-        <label className={s.label} htmlFor="bmId">Business Manager</label>
-        <select id="bmId" name="bmId" defaultValue={numero?.bmId ?? ""} className={s.select}>
-          <option value="">— sem BM —</option>
-          {bms.map((b) => (
-            <option key={b.id} value={b.id}>{b.nome}</option>
-          ))}
-        </select>
-        <span className={s.hint}>O cliente é herdado da BM.</span>
-      </div>
+        <Field label="Business Manager" htmlFor="bmId" help="O cliente vem da BM.">
+          <Select id="bmId" name="bmId" defaultValue={numero?.bmId ?? ""} hasHelp>
+            <option value="">Sem BM</option>
+            {bms.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.nome}
+              </option>
+            ))}
+          </Select>
+        </Field>
 
-      <div className={s.field}>
-        <label className={s.label} htmlFor="status">Status</label>
-        <select id="status" name="status" defaultValue={numero?.status ?? "pendente"} className={s.select}>
-          {NUMERO_STATUS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-      </div>
+        <Field label="Status" htmlFor="status">
+          <Select id="status" name="status" defaultValue={numero?.status ?? "pendente"}>
+            {NUMERO_STATUS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+        </Field>
 
-      <div className={s.field}>
-        <label className={s.label} htmlFor="qualidade">Qualidade (Meta)</label>
-        <select id="qualidade" name="qualidade" defaultValue={numero?.qualidade ?? "sem_avaliacao"} className={s.select}>
-          {QUALIDADE.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-      </div>
+        <Field label="Qualidade na Meta" htmlFor="qualidade">
+          <Select id="qualidade" name="qualidade" defaultValue={numero?.qualidade ?? "sem_avaliacao"}>
+            {QUALIDADE.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+        </Field>
 
-      <div className={s.field}>
-        <label className={s.label} htmlFor="limiteDiario">Limite diário</label>
-        <input id="limiteDiario" name="limiteDiario" type="number" min="0" defaultValue={numero?.limiteDiario ?? 0} className={s.input} />
-      </div>
+        <FormSection title="Uso de hoje" description="Até a sincronização com a Meta, preencha à mão." />
 
-      <div className={s.field}>
-        <label className={s.label} htmlFor="enviadasHoje">Enviadas hoje</label>
-        <input id="enviadasHoje" name="enviadasHoje" type="number" min="0" defaultValue={numero?.enviadasHoje ?? 0} className={s.input} />
-      </div>
+        <Field label="Limite diário" htmlFor="limiteDiario" help="0 = sem limite definido.">
+          <TextInput id="limiteDiario" name="limiteDiario" type="number" min="0" defaultValue={numero?.limiteDiario ?? 0} hasHelp />
+        </Field>
 
-      <div className={`${s.field} ${s.fieldWide}`}>
-        <label className={s.label} htmlFor="metaPhoneId">phone_number_id da Meta (opcional)</label>
-        <input id="metaPhoneId" name="metaPhoneId" defaultValue={numero?.metaPhoneId ?? ""} placeholder="Preencher ao conectar via app" className={s.input} />
-      </div>
+        <Field label="Enviadas hoje" htmlFor="enviadasHoje">
+          <TextInput id="enviadasHoje" name="enviadasHoje" type="number" min="0" defaultValue={numero?.enviadasHoje ?? 0} />
+        </Field>
 
-      <div className={`${s.field} ${s.fieldWide}`}>
-        <label className={s.label} htmlFor="notas">Notas</label>
-        <textarea id="notas" name="notas" defaultValue={numero?.notas ?? ""} placeholder="Observações internas sobre este número" className={s.textarea} />
-      </div>
+        <Field label="phone_number_id da Meta" htmlFor="metaPhoneId" optional wide help="Preenchido ao conectar pelo app da Meta.">
+          <TextInput id="metaPhoneId" name="metaPhoneId" defaultValue={numero?.metaPhoneId ?? ""} placeholder="Ex.: 109283746501928" mono hasHelp />
+        </Field>
 
-      <div className={s.formActions}>
-        <Link href="/numeros" className={s.btn}>Cancelar</Link>
-        <div className={s.formActionsRight}>
-          <button type="submit" className={`${s.btn} ${s.btnPrimary}`}>
+        <Field label="Notas" htmlFor="notas" optional wide>
+          <Textarea id="notas" name="notas" defaultValue={numero?.notas ?? ""} placeholder="Observações internas sobre este número" />
+        </Field>
+
+        <FormActions
+          start={
+            <Link href="/numeros" className={buttonClass({ variant: "ghost" })}>
+              Cancelar
+            </Link>
+          }
+        >
+          <button type="submit" className={buttonClass({ variant: "primary" })}>
             {numero?.id ? "Salvar alterações" : "Cadastrar número"}
           </button>
-        </div>
-      </div>
-    </form>
+        </FormActions>
+      </Form>
+    </Card>
   );
 }

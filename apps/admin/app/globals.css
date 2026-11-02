@@ -6,6 +6,7 @@
 
 @import "tailwindcss";
 @import "@eco/tokens/tokens.css";
+@import "@eco/ui/ui.css";
 
 @custom-variant admin (&:where([data-surface="admin"], [data-surface="admin"] *));
 @custom-variant portal (&:where([data-surface="portal"], [data-surface="portal"] *));
@@ -47,6 +48,9 @@
   --color-warning: var(--warning);
   --color-warning-subtle: var(--warning-subtle);
   --color-warning-border: var(--warning-border);
+  --color-serious: var(--serious);
+  --color-serious-subtle: var(--serious-subtle);
+  --color-serious-border: var(--serious-border);
   --color-danger: var(--danger);
   --color-danger-subtle: var(--danger-subtle);
   --color-danger-border: var(--danger-border);
@@ -119,14 +123,12 @@
   --accent: var(--brand-text);
   --accent-soft: var(--brand-subtle);
 
-  /* Severidade de alerta. O DS tem 4 intenções; "sério" ainda não tem tom
-     próprio e usa danger (diferenciado por ícone e rótulo). Pedido aberto
-     ao chat UX & Design System. */
+  /* Severidade de alerta: crítico (danger) > sério (serious) > aviso (warning).
+     O token --serious vem do tokens.css; aqui só os apelidos da Visão geral. */
   --good: var(--success);
   --good-text: var(--success);
   --warning-text: var(--warning);
-  --serious: var(--danger);
-  --serious-text: var(--danger);
+  --serious-text: var(--serious);
   --critical: var(--danger-solid);
   --critical-text: var(--danger);
 
