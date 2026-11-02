@@ -69,6 +69,12 @@ export function FleetMap({ fleet, titleId }: { fleet: FleetTenant[]; titleId: st
         <Legend />
       </div>
 
+      {fleet.length === 0 && (
+        <p className={s.empty}>
+          Nenhum número cadastrado ainda. Cadastre as <a href="/bms">BMs</a> e os <a href="/numeros">números</a> da operação para vê-los aqui com a qualidade e o uso do limite.
+        </p>
+      )}
+
       <div className={s.body} ref={bodyRef} onPointerLeave={hide}>
         {fleet.map((t) => (
           <div key={t.tenantId} className={s.tenant}>

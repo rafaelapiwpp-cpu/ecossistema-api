@@ -27,6 +27,9 @@ export function TenantTable({ rows, titleId }: { rows: TenantRow[]; titleId: str
         </div>
       </div>
 
+      {rows.length === 0 ? (
+        <p className={s.empty}>Nenhum cliente cadastrado ainda. Os clientes aparecem aqui assim que forem cadastrados e vinculados às BMs.</p>
+      ) : (
       <div className={s.scroll}>
         <table className={s.table}>
           <thead>
@@ -93,6 +96,7 @@ export function TenantTable({ rows, titleId }: { rows: TenantRow[]; titleId: str
           </tbody>
         </table>
       </div>
+      )}
     </>
   );
 }

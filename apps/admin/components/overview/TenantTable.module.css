@@ -157,3 +157,13 @@
 .warning {
   color: var(--warning-text);
 }
+
+.empty {
+  margin: 0 var(--s5) var(--s5);
+  padding: var(--s6) var(--s5);
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius-panel);
+  color: var(--ink-3);
+  font-size: var(--text-sm);
+  text-align: center;
+}
