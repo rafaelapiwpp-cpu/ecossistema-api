@@ -55,6 +55,24 @@ export function VolumeChart({ days, titleId }: { days: VolumeDay[]; titleId: str
   const active = hover !== null ? days[hover] : undefined;
   const totalSent = days.reduce((a, d) => a + d.sent, 0);
 
+  if (totalSent === 0) {
+    return (
+      <>
+        <div className={p.head}>
+          <div className={p.headText}>
+            <h2 id={titleId} className={p.title}>
+              Mensagens nos últimos {days.length} dias
+            </h2>
+            <p className={p.note}>Nenhuma mensagem registrada no período.</p>
+          </div>
+        </div>
+        <p className={s.empty}>
+          O gráfico se preenche quando os disparos começarem a gravar os envios no banco (enviadas, entregues, lidas e falhas por dia).
+        </p>
+      </>
+    );
+  }
+
   return (
     <>
       <div className={p.head}>

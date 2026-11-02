@@ -72,13 +72,19 @@ export function StatusRibbon({ kpis }: { kpis: AdminOverview["kpis"] }) {
 
         <div className={s.cell}>
           <dt>Taxa de entrega</dt>
-          <dd className={`${s.value} num`}>{formatPercent(m.deliveryRate)}</dd>
+          <dd className={`${s.value} num`}>{m.sent === 0 ? "—" : formatPercent(m.deliveryRate)}</dd>
           <dd className={s.context}>
+            {m.sent === 0 ? (
+              "sem envios registrados nas últimas 24 h"
+            ) : (
+              <>
             <span className={s.read}>
               <Icon name="doubleCheck" size={14} />
               {formatPercent(m.readRate, 0)}
             </span>{" "}
             das entregues foram lidas
+              </>
+            )}
           </dd>
         </div>
 
@@ -86,7 +92,7 @@ export function StatusRibbon({ kpis }: { kpis: AdminOverview["kpis"] }) {
           <dt>Opt-outs em 24 h</dt>
           <dd className={`${s.value} num`}>{formatInt(kpis.optOuts24h.count)}</dd>
           <dd className={s.context}>
-            {formatPercent(kpis.optOuts24h.rate, 2)} das entregues; todos aplicados
+            {m.delivered === 0 ? "nenhum envio entregue nas últimas 24 h" : `${formatPercent(kpis.optOuts24h.rate, 2)} das entregues; todos aplicados`}
           </dd>
         </div>
       </dl>

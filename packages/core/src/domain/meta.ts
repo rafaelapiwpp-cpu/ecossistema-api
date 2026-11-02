@@ -38,6 +38,13 @@ export type BusinessVerificationStatus = "verified" | "pending" | "not_verified"
  */
 export type BusinessManagerOwnership = "client" | "platform";
 
+/**
+ * Situação do portfólio perante a Meta (enforcement). Independe da verificação
+ * e do token: uma BM verificada e com token válido pode estar restrita.
+ * Restrita/banida = nada sai dela; o caminho é revisão/recurso na Meta (doc 04 §4.3).
+ */
+export type BusinessAccountStatus = "active" | "restricted" | "banned";
+
 /** Saúde da credencial (system user token) que usamos para operar a BM. */
 export type BusinessConnectionStatus = "active" | "token_expiring" | "token_invalid" | "revoked";
 
@@ -50,6 +57,7 @@ export interface BusinessManager extends Timestamps {
   verificationStatus: BusinessVerificationStatus;
   messagingLimitTier: MessagingLimitTier;
   connectionStatus: BusinessConnectionStatus;
+  accountStatus: BusinessAccountStatus;
   tokenExpiresAt: ISODateTime | null;
   lastSyncedAt: ISODateTime | null;
 }

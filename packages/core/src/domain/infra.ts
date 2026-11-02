@@ -44,6 +44,7 @@ export type AlertKind =
   | "number_flagged"
   | "number_restricted"
   | "number_disconnected"
+  | "bm_restricted"
   | "bm_verification_pending"
   | "bm_token_expiring"
   | "bm_limit_near"

@@ -120,6 +120,11 @@ export function deriveAlerts(input: AlertRuleInput): Alert[] {
     if (!isOperating(bm.tenantId)) continue;
     const subject = { type: "business_manager" as const, id: bm.id };
 
+    if (bm.accountStatus === "restricted" || bm.accountStatus === "banned") {
+      const banned = bm.accountStatus === "banned";
+      push("bm_restricted", "critical", bm.tenantId, subject, banned ? "BM banida pela Meta" : "BM restrita pela Meta", `Nenhum envio sai de ${bm.name}. O caminho é revisão ou recurso na Meta, não trocar de BM.`, bm.updatedAt);
+    }
+
     if (bm.connectionStatus === "token_invalid" || bm.connectionStatus === "revoked") {
       push("bm_token_expiring", "critical", bm.tenantId, subject, "Acesso à BM perdido", `O token de ${bm.name} não é mais válido. Nenhum envio sai desta BM até reconectar.`, bm.updatedAt);
     } else if (bm.tokenExpiresAt && new Date(bm.tokenExpiresAt).getTime() - now.getTime() < ALERT_THRESHOLDS.tokenExpiringDays * DAY_MS) {

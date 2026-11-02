@@ -22,6 +22,7 @@ import {
 } from "../domain";
 import type { DataSource } from "../data/datasource";
 import { DAY_MS, addDays, localDate, startOfLocalMonth } from "../time";
+import { isSyntheticBm, UNASSIGNED_TENANT_ID } from "../data/postgres/mappers";
 
 /**
  * Read model da tela "Visão geral" do painel admin.
@@ -56,6 +57,8 @@ export interface FleetBusinessManager {
   /** recipients24h / limit; null quando ilimitado. */
   limitUsage: number | null;
   numbers: FleetNumber[];
+  /** Agrupador de números sem BM vinculada no banco — não é uma BM da Meta. */
+  placeholder: boolean;
 }
 
 export interface FleetTenant {
@@ -264,6 +267,7 @@ export async function getAdminOverview(ds: DataSource, options: { volumeDays?: n
           recipients24h: u?.uniqueRecipients ?? 0,
           limitUsage: limit ? ratio(u?.uniqueRecipients ?? 0, limit) : null,
           numbers: numbers.filter((n) => n.businessManagerId === b.id).map(toFleetNumber),
+          placeholder: isSyntheticBm(b.id),
         };
       }),
   }));
@@ -299,6 +303,10 @@ export async function getAdminOverview(ds: DataSource, options: { volumeDays?: n
     };
   });
 
+  // Agrupadores sintéticos (órfãos do banco) aparecem na frota e na tabela, mas não contam como cliente/BM.
+  const realTenants = tenants.filter((t) => t.id !== UNASSIGNED_TENANT_ID);
+  const realBms = bms.filter((b) => !isSyntheticBm(b.id));
+
   const infraIssues = services.filter((s) => s.status !== "operational").map((s) => ({ name: s.name, status: s.status }));
   const worstInfraStatus = services.reduce<HealthStatus>((w, s) => (HEALTH_RANK[s.status] < HEALTH_RANK[w] ? s.status : w), "operational");
 
@@ -317,16 +325,16 @@ export async function getAdminOverview(ds: DataSource, options: { volumeDays?: n
     },
     kpis: {
       tenants: {
-        total: tenants.length,
-        active: tenants.filter((t) => t.status === "active").length,
-        trial: tenants.filter((t) => t.status === "trial").length,
-        pastDue: tenants.filter((t) => t.status === "past_due").length,
-        suspended: tenants.filter((t) => t.status === "suspended").length,
+        total: realTenants.length,
+        active: realTenants.filter((t) => t.status === "active").length,
+        trial: realTenants.filter((t) => t.status === "trial").length,
+        pastDue: realTenants.filter((t) => t.status === "past_due").length,
+        suspended: realTenants.filter((t) => t.status === "suspended").length,
       },
       businessManagers: {
-        total: bms.length,
-        verified: bms.filter((b) => b.verificationStatus === "verified").length,
-        awaitingVerification: bms.filter((b) => b.verificationStatus === "pending" || b.verificationStatus === "not_verified").length,
+        total: realBms.length,
+        verified: realBms.filter((b) => b.verificationStatus === "verified").length,
+        awaitingVerification: realBms.filter((b) => b.verificationStatus === "pending" || b.verificationStatus === "not_verified").length,
       },
       phoneNumbers: {
         total: numbers.length,

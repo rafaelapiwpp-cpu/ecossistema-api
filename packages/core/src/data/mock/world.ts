@@ -7,9 +7,9 @@ import type {
   CampaignStatus,
   DisplayNameStatus,
   MessagingLimitTier,
-  PhoneNumberStatus,
   Plan,
   PlanLimits,
+  PhoneNumberStatus,
   QualityRating,
   TemplateCategory,
   TemplateStatus,
@@ -33,12 +33,7 @@ export const MOCK_NOW = new Date("2026-11-01T02:00:00.000Z");
 /** Quantos dias de histórico horário o mock gera (cobre o mês corrente inteiro). */
 export const MOCK_HISTORY_DAYS = 35;
 
-export const PLAN_SPECS: Array<Pick<Plan, "code" | "name" | "monthlyPriceCents" | "isPublic"> & { limits: PlanLimits }> = [
-  { code: "start", name: "Start", monthlyPriceCents: 29_700, isPublic: true, limits: { monthlyMessages: 20_000, phoneNumbers: 1, seats: 3, contacts: 10_000 } },
-  { code: "growth", name: "Growth", monthlyPriceCents: 79_700, isPublic: true, limits: { monthlyMessages: 100_000, phoneNumbers: 3, seats: 10, contacts: 60_000 } },
-  { code: "scale", name: "Scale", monthlyPriceCents: 199_000, isPublic: true, limits: { monthlyMessages: 400_000, phoneNumbers: 10, seats: 30, contacts: 250_000 } },
-  { code: "enterprise", name: "Enterprise", monthlyPriceCents: 490_000, isPublic: false, limits: { monthlyMessages: 1_500_000, phoneNumbers: 30, seats: 100, contacts: 1_000_000 } },
-];
+export { PLAN_SPECS } from "../plans";
 
 export interface NumberSpec {
   suffix: string;

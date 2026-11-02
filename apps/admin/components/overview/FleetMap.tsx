@@ -87,10 +87,16 @@ export function FleetMap({ fleet, titleId }: { fleet: FleetTenant[]; titleId: st
                     <span className={s.bmName} title={bm.name}>
                       {bm.name}
                     </span>
-                    <BmFlags bm={bm} />
+                    {!bm.placeholder && <BmFlags bm={bm} />}
                   </div>
 
-                  <LimitUsage bm={bm} />
+                  {bm.placeholder ? (
+                    <div className={s.limit}>
+                      <span className={s.limitText}>vincule estes números a uma BM</span>
+                    </div>
+                  ) : (
+                    <LimitUsage bm={bm} />
+                  )}
 
                   <ul className={s.chips} aria-label={`Números da BM ${bm.name}`}>
                     {bm.numbers.map((n) => {

@@ -15,7 +15,8 @@
     "build": "npm run build -w @eco/admin",
     "start": "npm run start -w @eco/admin",
     "typecheck": "npm run typecheck -w @eco/core && npm run typecheck -w @eco/admin",
-    "mock:overview": "npm run mock:overview -w @eco/core"
+    "mock:overview": "npm run mock:overview -w @eco/core",
+    "test": "npm test --workspaces --if-present"
   },
   "devDependencies": {
     "typescript": "^5.9.0"

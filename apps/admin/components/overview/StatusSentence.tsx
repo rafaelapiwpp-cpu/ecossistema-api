@@ -41,7 +41,8 @@ export function StatusSentence({ attention, servicesTotal }: { attention: AdminO
 
   let infraText: string;
   if (issues.length === 0) {
-    infraText = `Infraestrutura normal nos ${servicesTotal} serviços.`;
+    infraText =
+      servicesTotal === 1 ? "Infraestrutura normal no serviço monitorado." : `Infraestrutura normal nos ${servicesTotal} serviços.`;
   } else {
     const list = issues.map((i) => `${i.name} (${HEALTH_LABEL[i.status].toLowerCase()})`).join(", ");
     const rest = okCount === 0 ? "" : okCount === 1 ? " O outro serviço está normal." : ` Os outros ${okCount} estão normais.`;

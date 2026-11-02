@@ -27,6 +27,11 @@ export function OverviewScreen({ data }: { data: AdminOverview }) {
                 Dados simulados
               </span>
             )}
+            {data.dataSource === "postgres" && (
+              <span className={s.mockBadge} title="Clientes, BMs, números e templates vêm do banco. Métricas de mensagens aparecem quando os disparos gravarem os envios.">
+                Dados do banco
+              </span>
+            )}
             <span className="num">Atualizado em {formatDateTime(data.generatedAt)}</span>
           </div>
         </div>

@@ -155,6 +155,7 @@ export function buildMockWorld(now: Date = MOCK_NOW): MockWorld {
         verificationStatus: bmSpec.verification,
         messagingLimitTier: bmSpec.tier,
         connectionStatus: bmSpec.connection ?? "active",
+        accountStatus: "active",
         tokenExpiresAt: bmSpec.tokenExpiresInDays != null ? iso(ago(now, -bmSpec.tokenExpiresInDays)) : iso(ago(now, -48)),
         lastSyncedAt: iso(new Date(now.getTime() - (4 + j) * 60_000)),
         createdAt: iso(bmCreated),
