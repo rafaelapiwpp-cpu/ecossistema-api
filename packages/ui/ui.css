@@ -364,12 +364,13 @@
 /* ---------- Form ---------- */
 .eco-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4) var(--space-5); padding: var(--space-6); }
 .eco-form__section { grid-column: 1 / -1; display: grid; gap: 2px; padding-top: var(--space-2); }
-.eco-form__section + .eco-field { margin-top: calc(-1 * var(--space-2)); }
+/* aproxima a primeira linha de campos do título do grupo, nas duas colunas */
+.eco-form__section { margin-bottom: calc(-1 * var(--space-2)); }
 .eco-form__section h2 { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; color: var(--text-primary); }
 .eco-form__section p { margin: 0; font-size: 13px; line-height: 18px; color: var(--text-secondary); }
 .eco-field--wide { grid-column: 1 / -1; }
 .eco-label__opt { font-weight: 400; color: var(--text-muted); }
-.eco-input > select { cursor: pointer; padding-right: var(--space-5); }
+.eco-input > select { cursor: pointer; padding-right: var(--space-5); height: auto; line-height: 20px; }
 .eco-input--select { position: relative; }
 .eco-input--select > svg { position: absolute; right: var(--space-2); width: 16px; height: 16px; color: var(--text-muted); pointer-events: none; }
 .eco-input--select > select option { background: var(--bg-overlay); color: var(--text-primary); }
