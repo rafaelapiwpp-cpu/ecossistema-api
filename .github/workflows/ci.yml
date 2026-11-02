@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "ci/**", "feat/**"]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar
+        run: npm install --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Testes
+        run: npm test --if-present
+      # Build sem tocar no banco: o `build` do admin faz `prisma db push`, que é
+      # coisa de deploy (Vercel). Aqui só gera o cliente e compila.
+      - name: Build admin
+        run: npx -w @eco/admin prisma generate && npm exec -w @eco/admin -- next build
