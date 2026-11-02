@@ -93,4 +93,4 @@ export const CONSENT: Record<'opted_in' | 'opted_out' | 'unknown', { label: stri
 
 export const CONSENT_SOURCE: Record<string, string> = labels(STATUS.consentSource);
 
-export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ');
+export const cx = (...c: unknown[]) => c.filter((x): x is string => typeof x === 'string' && x.length > 0).join(' ');
