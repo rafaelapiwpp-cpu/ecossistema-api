@@ -1,0 +1,240 @@
+/* Estilos compartilhados das telas de CRUD da contingência. Usa os tokens
+   semânticos do design system (variáveis globais definidas em globals.css). */
+
+.page {
+  padding: var(--s6) var(--s8);
+  max-width: 1100px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s4);
+  margin-bottom: var(--s5);
+}
+
+.title {
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.sub {
+  margin-top: 2px;
+  color: var(--ink-3);
+  font-size: var(--text-sm);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  height: var(--ctl-h, 34px);
+  padding: 0 var(--s4);
+  border-radius: var(--radius-chip);
+  border: 1px solid var(--hairline-strong);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: var(--surface-raised);
+  text-decoration: none;
+}
+
+.btnPrimary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--on-brand);
+}
+
+.btnPrimary:hover {
+  background: var(--brand-hover);
+}
+
+.btnDanger {
+  color: var(--danger);
+  border-color: var(--danger-border);
+  background: var(--danger-subtle);
+}
+
+.btnDanger:hover {
+  background: var(--danger-subtle);
+  filter: brightness(1.1);
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-panel);
+  overflow: hidden;
+}
+
+/* ---------- Formulário ---------- */
+
+.form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--s4);
+  padding: var(--s6);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldWide {
+  grid-column: 1 / -1;
+}
+
+.label {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.hint {
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  background: var(--color-field, var(--bg-input));
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-chip);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: 0 var(--s3);
+  height: 38px;
+}
+
+.textarea {
+  height: auto;
+  min-height: 84px;
+  padding: var(--s2) var(--s3);
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: 2px solid var(--brand-ring);
+  outline-offset: 1px;
+  border-color: var(--brand);
+}
+
+.formActions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s3);
+  padding-top: var(--s2);
+  border-top: 1px solid var(--hairline);
+}
+
+.formActionsRight {
+  display: flex;
+  gap: var(--s3);
+}
+
+/* ---------- Tabela ---------- */
+
+.scroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.table thead th {
+  padding: var(--s2) var(--s3);
+  background: var(--surface-sunken);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table thead th:first-child,
+.table td:first-child {
+  padding-left: var(--s5);
+}
+
+.table td {
+  padding: var(--s3);
+  border-bottom: 1px solid var(--hairline);
+  vertical-align: middle;
+  color: var(--ink-2);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table tbody tr:hover {
+  background: var(--surface-raised);
+}
+
+.name {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.rowActions {
+  display: inline-flex;
+  gap: var(--s3);
+  white-space: nowrap;
+}
+
+.link {
+  color: var(--brand-text);
+  font-size: var(--text-sm);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: var(--brand-text);
+}
+
+.linkDanger {
+  color: var(--danger);
+}
+
+/* ---------- Estado vazio ---------- */
+
+.empty {
+  padding: var(--s10) var(--s6);
+  text-align: center;
+  color: var(--ink-3);
+}
+
+.emptyTitle {
+  color: var(--ink-2);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
