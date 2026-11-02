@@ -4,16 +4,21 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 3000",
-    "build": "next build",
+    "build": "prisma generate && prisma db push --skip-generate --accept-data-loss && next build",
     "start": "next start --port 3000",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postinstall": "prisma generate"
+  },
+  "prisma": {
+    "schema": "prisma/schema.prisma"
   },
   "dependencies": {
     "@eco/core": "*",
+    "@eco/tokens": "*",
+    "@prisma/client": "^6.1.0",
     "next": "^16.0.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "@eco/tokens": "*"
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
@@ -22,6 +27,7 @@
     "typescript": "^5.9.0",
     "tailwindcss": "^4.1.0",
     "@tailwindcss/postcss": "^4.1.0",
-    "postcss": "^8.5.0"
+    "postcss": "^8.5.0",
+    "prisma": "^6.1.0"
   }
 }

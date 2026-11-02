@@ -1,0 +1,99 @@
+// Camada de persistência v1 — Contingência (dados reais do operador).
+// Neon Postgres (plano Free) conectado via Vercel. DATABASE_URL = pooled
+// (pgbouncer) para a app; DATABASE_URL_UNPOOLED = conexão direta para migrações.
+//
+// Nota de arquitetura: este é o primeiro pedaço real de persistência do
+// ecossistema (contingência). Os estados seguem o doc 04 (Segurança &
+// Contingência). Multi-tenant/RLS/auth completos entram quando o portal do
+// cliente for exposto; v1 é a ferramenta do operador para cadastrar sua
+// própria contingência.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+/// Cliente (tenant) que contrata a operação. 1 BM por cliente (regra do doc 04).
+model Cliente {
+  id        String     @id @default(cuid())
+  nome      String
+  slug      String     @unique
+  plano     String     @default("starter") // starter | pro | scale | enterprise
+  status    String     @default("ativo")   // ativo | trial | suspenso | inadimplente | cancelado
+  notas     String?
+  criadoEm  DateTime   @default(now())
+  atualizadoEm DateTime @updatedAt
+  bms       Bm[]
+  numeros   Numero[]
+  templates Template[]
+
+  @@map("cliente")
+}
+
+/// Business Manager / portfólio da Meta.
+model Bm {
+  id           String   @id @default(cuid())
+  nome         String
+  clienteId    String?
+  cliente      Cliente? @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  // doc 04 §4.2: em_verificacao | escalonando | ativa | restrita | banida
+  status       String   @default("em_verificacao")
+  // verificação de negócio na Meta
+  verificacao  String   @default("pendente") // pendente | verificada | recusada
+  // nível de limite 24h do portfólio (usuários únicos)
+  nivelLimite  Int      @default(250) // 250 | 1000 | 10000 | 100000 (0 = ilimitado)
+  metaBmId     String?  // ID do portfólio na Meta (quando conectar via app)
+  notas        String?
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+  numeros      Numero[]
+
+  @@index([clienteId])
+  @@map("bm")
+}
+
+/// Número de WhatsApp vinculado a uma BM.
+model Numero {
+  id           String   @id @default(cuid())
+  telefone     String
+  bmId         String?
+  bm           Bm?      @relation(fields: [bmId], references: [id], onDelete: SetNull)
+  clienteId    String?
+  cliente      Cliente? @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  // doc 04 §4.2: pendente | aquecendo | ativo | limitado | restrito | banido | desconectado
+  status       String   @default("pendente")
+  // qualidade da Meta: alta | media | baixa | sem_avaliacao
+  qualidade    String   @default("sem_avaliacao")
+  enviadasHoje Int      @default(0)
+  limiteDiario Int      @default(0)
+  metaPhoneId  String?  // phone_number_id da Meta (quando conectar)
+  notas        String?
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@index([bmId])
+  @@index([clienteId])
+  @@map("numero")
+}
+
+/// Template (HSM) aprovado na Meta.
+model Template {
+  id           String   @id @default(cuid())
+  nome         String
+  clienteId    String?
+  cliente      Cliente? @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  categoria    String   @default("marketing") // marketing | utilidade | autenticacao
+  status       String   @default("em_analise") // aprovado | em_analise | rejeitado | pausado | desativado
+  idioma       String   @default("pt_BR")
+  corpo        String
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@index([clienteId])
+  @@map("template")
+}
