@@ -7,7 +7,8 @@
     "build": "prisma generate && prisma db push --skip-generate --accept-data-loss && next build",
     "start": "next start --port 3000",
     "typecheck": "tsc --noEmit",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test": "tsx --test lib/disparos/tests/*.test.ts"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"
@@ -28,6 +29,7 @@
     "tailwindcss": "^4.1.0",
     "@tailwindcss/postcss": "^4.1.0",
     "postcss": "^8.5.0",
-    "prisma": "^6.1.0"
+    "prisma": "^6.1.0",
+    "tsx": "^4.19.0"
   }
 }

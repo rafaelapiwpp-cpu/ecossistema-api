@@ -25,13 +25,14 @@ export const NAV: NavGroup[] = [
       { href: "/bms", label: "Business Managers", icon: "businessManager", ready: true },
       { href: "/numeros", label: "Números", icon: "phone", ready: true },
       { href: "/templates", label: "Templates", icon: "template", ready: true },
-      { href: "/campanhas", label: "Campanhas", icon: "campaign", ready: false },
+      { href: "/campanhas", label: "Campanhas", icon: "campaign", ready: true },
+      { href: "/fluxos", label: "Fluxos", icon: "flow", ready: true },
     ],
   },
   {
     label: "Conformidade",
     items: [
-      { href: "/contatos", label: "Contatos e opt-out", icon: "contacts", ready: false },
+      { href: "/contatos", label: "Contatos e opt-out", icon: "contacts", ready: true },
       { href: "/auditoria", label: "Auditoria", icon: "audit", ready: false },
     ],
   },
