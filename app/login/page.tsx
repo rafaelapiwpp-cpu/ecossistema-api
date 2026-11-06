@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import SubmitOnce from "@/components/SubmitOnce";
 import Wordmark from "@/components/Wordmark";
 import { BRAND } from "@/lib/brand";
 import { hasDb } from "@/lib/db";
@@ -20,7 +21,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
         <label className="field"><span>E-mail (ou usuário)</span><input type="text" name="login" placeholder="voce@empresa.com" required autoFocus autoComplete="username" /></label>
         <label className="field"><span>Senha</span><input type="password" name="password" required autoComplete="current-password" /></label>
         {sp.erro && <div className="err">E-mail ou senha incorretos</div>}
-        <button className="btn primary" type="submit" style={{ justifyContent: "center" }}>Entrar</button>
+        <SubmitOnce className="btn primary" style={{ justifyContent: "center" }} pending="Entrando…">Entrar</SubmitOnce>
         <div className="login-links"><a href="/esqueci-senha">Esqueci minha senha</a></div>
       </form>
     </div>

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { hasDb, query } from "@/lib/db";
-import { ensureSchema } from "@/lib/schema";
+import { ensureSchema, SCHEMA_VERSION } from "@/lib/schema";
 import { getSettings, DEFAULTS } from "@/lib/settings";
 import { COOKIE, cookieOptions, hashPassword, randomToken, sessionValue, findUserByLogin } from "@/lib/auth";
 import { clean } from "@/lib/guard";
@@ -30,10 +30,11 @@ export async function POST(req: Request) {
 
   await ensureSchema();
   const hash = hashPassword(password);
+  // schema_version já na versão atual: sem isso, cada servidor novo refazia a migração inteira na primeira tela
   await query(
-    `insert into settings (id, password_hash, session_secret, meta_token, meta_app_secret, meta_business_id, meta_app_id, webhook_verify_token, cron_secret, graph_version)
-     values (1, $1, $2, $3, $4, $5, $6, $7, $8, $9) on conflict (id) do nothing`,
-    [hash, randomToken(32), seal(token), seal(secret), business, appId, randomToken(16), randomToken(24), DEFAULTS.graph_version],
+    `insert into settings (id, password_hash, session_secret, meta_token, meta_app_secret, meta_business_id, meta_app_id, webhook_verify_token, cron_secret, graph_version, schema_version)
+     values (1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10) on conflict (id) do nothing`,
+    [hash, randomToken(32), seal(token), seal(secret), business, appId, randomToken(16), randomToken(24), DEFAULTS.graph_version, SCHEMA_VERSION],
   );
   await query(
     `insert into users (name, email, password_hash, role) values ($1, $2, $3, 'master') on conflict (email) do nothing`, // quem configura é o dono (Master)

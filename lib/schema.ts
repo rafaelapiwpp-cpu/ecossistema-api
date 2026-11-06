@@ -402,7 +402,9 @@ export const SCHEMA_VERSION = 20;
 
 export async function ensureSchema() {
   const sql = db();
-  for (const s of SCHEMA) await sql.unsafe(s);
+  // Um envio só ao banco (e uma transação só): comando por comando eram ~150 idas e voltas, ~25 s no Neon,
+  // e a primeira configuração parecia travada.
+  await sql.unsafe(SCHEMA.join(";\n")).simple();
   await sql.unsafe("update settings set schema_version = $1 where id = 1", [SCHEMA_VERSION]);
 }
 
