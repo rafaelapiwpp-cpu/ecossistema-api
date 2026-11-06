@@ -36,9 +36,18 @@ export type AppStatus = {
   error?: string;
 };
 
+/** Para onde a Meta manda os eventos de um número, do jeito que ela mesma informa (webhook_configuration). */
+export type NumberRoute = {
+  id: string; display: string | null;
+  /** endereço em uso: desvio do número > desvio da conta > webhook do app */
+  url: string | null; level: "numero" | "conta" | "app" | null;
+  ours: boolean; error?: string;
+};
+
 export type WabaStatus = {
   id: string; name: string | null; subscribed: boolean;
-  apps: { id: string; name: string | null }[];
+  apps: { id: string; name: string | null; override: string | null }[];
+  numbers: NumberRoute[];
   error?: string;
 };
 
@@ -97,22 +106,40 @@ export async function configureApp(s: Settings, base: string) {
   });
 }
 
-export async function wabaStatuses(s: Settings, scope?: Scope | null): Promise<WabaStatus[]> {
+export async function wabaStatuses(s: Settings, scope?: Scope | null, base?: string): Promise<WabaStatus[]> {
   const wabas = await visibleWabas(scope);
-  const out: WabaStatus[] = [];
-  for (const w of wabas) {
+  const expected = base ? `${base}/api/webhook` : null;
+  const isOurs = (u: string | null) => !!u && !!expected && u.replace(/\/$/, "") === expected;
+  return Promise.all(wabas.map(async (w): Promise<WabaStatus> => {
     try {
       const g = await graphForWaba(s, w.id); // token da BM dona da conta
       const appId = (await connectionForWaba(w.id))?.app_id || s.meta_app_id;
-      const r = await g.get<{ data: any[] }>(`${w.id}/subscribed_apps`);
-      const apps = (r.data || []).map((d) => ({ id: String(d.whatsapp_business_api_data?.id ?? d.id ?? ""), name: d.whatsapp_business_api_data?.name ?? d.name ?? null }));
+      const [r, nums] = await Promise.all([
+        g.get<{ data: any[] }>(`${w.id}/subscribed_apps`),
+        query<{ id: string; display_phone_number: string | null }>("select id, display_phone_number from phone_numbers where waba_id = $1 order by display_phone_number", [w.id]),
+      ]);
+      const apps = (r.data || []).map((d) => ({
+        id: String(d.whatsapp_business_api_data?.id ?? d.id ?? ""), name: d.whatsapp_business_api_data?.name ?? d.name ?? null,
+        override: d.override_callback_uri ?? null,
+      }));
       const subscribed = appId ? apps.some((a) => a.id === String(appId)) : apps.length > 0;
-      out.push({ id: w.id, name: w.name, subscribed, apps });
+      // a própria Meta diz para onde vão os eventos de cada número (um desvio no número ou na conta vence o webhook do app)
+      const numbers = await Promise.all(nums.map(async (n): Promise<NumberRoute> => {
+        try {
+          const c = await g.get<{ webhook_configuration?: { phone_number?: string; whatsapp_business_account?: string; application?: string } }>(n.id, { fields: "webhook_configuration" });
+          const wc = c.webhook_configuration || {};
+          const url = wc.phone_number || wc.whatsapp_business_account || wc.application || null;
+          const level = wc.phone_number ? "numero" : wc.whatsapp_business_account ? "conta" : wc.application ? "app" : null;
+          return { id: n.id, display: n.display_phone_number, url, level, ours: isOurs(url) };
+        } catch (e: any) {
+          return { id: n.id, display: n.display_phone_number, url: null, level: null, ours: false, error: e.message };
+        }
+      }));
+      return { id: w.id, name: w.name, subscribed, apps, numbers };
     } catch (e: any) {
-      out.push({ id: w.id, name: w.name, subscribed: false, apps: [], error: e.message });
+      return { id: w.id, name: w.name, subscribed: false, apps: [], numbers: [], error: e.message };
     }
-  }
-  return out;
+  }));
 }
 
 /** Inscreve o app em todas as contas visíveis (o mesmo passo da sincronização), cada uma com o token da sua BM. */
@@ -219,6 +246,6 @@ function summarize(field: string, p: any, phoneName: Map<string, string>): strin
 }
 
 export async function diagnose(s: Settings, base: string, scope?: Scope | null): Promise<Diagnosis> {
-  const [app, wabas, token, events] = await Promise.all([appStatus(s, base), wabaStatuses(s, scope), tokenStatus(s, scope), eventStats(scope)]);
+  const [app, wabas, token, events] = await Promise.all([appStatus(s, base), wabaStatuses(s, scope, base), tokenStatus(s, scope), eventStats(scope)]);
   return { base, app, wabas, token, events, checked_at: new Date().toISOString() };
 }

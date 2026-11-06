@@ -41,7 +41,9 @@ export default function WebhookDiag({ demo, master = true }: { demo: boolean; ma
   const appTone = !app ? "neutral" : app.error ? "critical" : !app.configured ? "critical" : !app.matches ? "serious" : app.missing_fields.length ? "warning" : app.active === false ? "warning" : "good";
   const appText = !app ? "…" : app.error ? "Não foi possível consultar" : !app.configured ? "Sem webhook configurado no app" : !app.matches ? "Configurado para outro endereço" : app.missing_fields.length ? `Faltam campos: ${app.missing_fields.join(", ")}` : app.active === false ? "Configurado, mas inativo" : "Configurado para este sistema";
   const wabasOk = d ? d.wabas.filter((w) => w.subscribed).length : 0;
-  const wabasTone = !d ? "neutral" : !d.wabas.length ? "warning" : wabasOk === d.wabas.length ? "good" : wabasOk ? "warning" : "critical";
+  // números cujos eventos a Meta manda para outro endereço (desvio no número/conta ou webhook de outro app)
+  const routesBad = d ? d.wabas.flatMap((w) => w.numbers || []).filter((n) => !n.error && !n.ours).length : 0;
+  const wabasTone = !d ? "neutral" : !d.wabas.length ? "warning" : routesBad ? "critical" : wabasOk === d.wabas.length ? "good" : wabasOk ? "warning" : "critical";
   const tokenTone = !tk ? "neutral" : tk.error || tk.valid === false ? "critical" : tk.missing_scopes.length ? "serious" : "good";
   const sigProblem = Boolean(ev && ev.last24h.invalid_signature > 0 && ev.last24h.messages === 0 && ev.last24h.other === 0);
   const eventsTone = !ev ? "neutral" : sigProblem ? "critical" : ev.last24h.invalid_signature ? "warning" : ev.last_at ? "good" : "warning";
@@ -76,10 +78,27 @@ export default function WebhookDiag({ demo, master = true }: { demo: boolean; ma
               {d.wabas.map((w) => (
                 <li key={w.id}>
                   <b>{w.name || w.id}</b> — {w.error ? <span className="err">{w.error}</span> : w.subscribed ? <span className="ok">inscrita</span> : <span className="err">não inscrita</span>}
-                  {w.apps.length > 0 && <span className="muted"> · apps que recebem os eventos: {w.apps.map((a) => a.name || a.id).join(", ")}</span>}
+                  {w.apps.length > 0 && <span className="muted"> · apps que recebem os eventos: {w.apps.map((a) => (a.name || a.id) + (a.override ? ` (desviado para ${a.override})` : "")).join(", ")}</span>}
+                  {(w.numbers || []).length > 0 && (
+                    <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>
+                      {w.numbers.map((n) => (
+                        <li key={n.id}>
+                          {n.display || n.id} — {n.error ? <span className="err">não deu para conferir: {n.error}</span>
+                            : n.ours ? <span className="ok">mensagens chegam aqui</span>
+                            : <span className="err">a Meta manda as mensagens para {n.url || "nenhum endereço"}{n.level === "numero" ? " (desvio gravado no número)" : n.level === "conta" ? " (desvio gravado na conta)" : n.level === "app" ? " (webhook do app deste token)" : ""}</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </li>
               ))}
             </ul>
+            {routesBad > 0 && (
+              <div className="err" style={{ marginTop: 8 }}>
+                {routesBad} número(s) com as mensagens indo para outro endereço: nada deles chega ao Atendimento. Acontece quando o número foi
+                ligado antes a outra ferramenta (desvio no número ou na conta) ou quando o token da conexão é de um app diferente do configurado no item 1.
+              </div>
+            )}
             {d.wabas.length > 0 && wabasOk < d.wabas.length && (
               <button className="btn" style={{ marginTop: 8 }} onClick={() => act("subscribe_wabas")} disabled={busy !== null}>{busy === "subscribe_wabas" ? "Inscrevendo…" : "Inscrever todas as contas"}</button>
             )}
