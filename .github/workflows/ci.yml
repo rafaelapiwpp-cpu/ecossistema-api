@@ -14,6 +14,8 @@ jobs:
           node-version: 22
       # sem package-lock no repositório (como na Vercel): instala pelas versões do package.json
       - run: npm install --no-audit --no-fund
+      - name: Auditoria (diagnóstico)
+        run: npm audit --omit=dev || true; npm ls nodemailer xlsx next react postgres || true
       - name: Tipos
         run: npx tsc --noEmit -p .
       - name: Build
