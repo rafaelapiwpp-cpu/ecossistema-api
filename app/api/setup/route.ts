@@ -25,7 +25,8 @@ export async function POST(req: Request) {
   const back = (erro: string) => NextResponse.redirect(new URL(`/setup?erro=${erro}`, req.url), 303);
   if (password.length < 8) return back("senha");
   if (password !== again) return back("confirmacao");
-  if (!token || !secret || !business) return back("meta");
+  // Meta é opcional na primeira configuração (a BM pode ser conectada depois em Conexões); se vier, vem completa.
+  if ((token || secret || business) && !(token && secret && business)) return back("meta");
 
   await ensureSchema();
   const hash = hashPassword(password);
