@@ -4,6 +4,7 @@ import { getSettings } from "@/lib/settings";
 import { query } from "@/lib/db";
 import { companyBySlug, companyById } from "@/lib/access";
 import { isClient, isManagerRole } from "@/lib/roles";
+import { clearLoginFailures, clientIp, loginBlocked, noteLoginFailure } from "@/lib/login-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -16,10 +17,17 @@ export async function POST(req: Request) {
   // portal: o formulário de /{empresa}/login manda o endereço da empresa
   const slug = String(form.get("company") || "").trim().toLowerCase();
   const portal = slug ? await companyBySlug(slug) : null;
-  const fail = () => NextResponse.redirect(new URL(portal ? `/${portal.slug}/login?erro=1` : "/login?erro=1", req.url), 303);
+  const fail = (erro = "1") => NextResponse.redirect(new URL(portal ? `/${portal.slug}/login?erro=${erro}` : `/login?erro=${erro}`, req.url), 303);
 
-  const user = await findUserByLogin(login);
-  if (!(user && verifyPassword(password, user.password_hash))) return fail();
+  // muitas senhas erradas em pouco tempo: nem confere a senha até a janela passar
+  const ip = clientIp(req);
+  const [blocked, user] = await Promise.all([loginBlocked(login, ip), findUserByLogin(login)]);
+  if (blocked) return fail("bloqueado");
+  if (!(user && verifyPassword(password, user.password_hash))) {
+    await noteLoginFailure(login, ip);
+    return fail();
+  }
+  await clearLoginFailures(login);
 
   let dest = "/";
   if (isClient(user.role)) {

@@ -396,9 +396,13 @@ export const SCHEMA = [
   // padrões para empresas novas (funil, respostas rápidas, departamentos): editáveis em Configurações → Empresas
   `alter table settings add column if not exists company_defaults jsonb`,
   `create table if not exists user_watch_phones (user_id integer not null, phone_number_id text not null, created_at timestamptz default now(), primary key (user_id, phone_number_id))`,
+  // ---- v21: tentativas de login erradas (limite contra adivinhação de senha — lib/login-guard.ts) ----
+  `create table if not exists login_failures (id bigserial primary key, login text not null, ip text not null, at timestamptz not null default now())`,
+  `create index if not exists login_failures_login on login_failures (login, at desc)`,
+  `create index if not exists login_failures_ip on login_failures (ip, at desc)`,
 ];
 
-export const SCHEMA_VERSION = 20;
+export const SCHEMA_VERSION = 21;
 
 export async function ensureSchema() {
   const sql = db();

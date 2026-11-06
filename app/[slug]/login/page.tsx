@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { hasDb } from "@/lib/db";
 import { getSettings } from "@/lib/settings";
 import { companyBySlug } from "@/lib/access";
+import { LOCK_MINUTES } from "@/lib/login-guard";
 import { companyThemeCss, logoSrc } from "@/lib/companies";
 
 export const dynamic = "force-dynamic";
@@ -42,7 +43,7 @@ export default async function PortalLogin({ params, searchParams }: { params: Pr
         <h1>Entrar</h1>
         <label className="field"><span>E-mail</span><input type="email" name="login" placeholder="voce@empresa.com" required autoFocus autoComplete="username" /></label>
         <label className="field"><span>Senha</span><input type="password" name="password" required autoComplete="current-password" /></label>
-        {sp.erro && <div className="err">E-mail ou senha incorretos</div>}
+        {sp.erro && <div className="err">{sp.erro === "bloqueado" ? `Muitas tentativas erradas. Aguarde ${LOCK_MINUTES} minutos e tente de novo.` : "E-mail ou senha incorretos"}</div>}
         <button className="btn primary" type="submit" style={{ justifyContent: "center" }}>Entrar</button>
         <div className="login-links"><a href="/esqueci-senha">Esqueci minha senha</a></div>
       </form>
