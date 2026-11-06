@@ -52,6 +52,11 @@ model Bm {
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
   numeros      Numero[]
+  // ---- Conexão com a Meta (lib/meta/sync.ts). Nulos = BM só cadastrada à mão.
+  metaNome           String?   // nome do portfólio na Meta
+  metaSincronizadoEm DateTime? // última sincronização com a Graph API
+  metaErro           String?   // último erro da Graph API (null = ok)
+  wabas              Waba[]
 
   @@index([clienteId])
   @@map("bm")
@@ -75,9 +80,21 @@ model Numero {
   notas        String?
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
+  // ---- Vindo da Meta (lib/meta/sync.ts). Nulos = número só cadastrado à mão.
+  wabaId         String?
+  waba           Waba?     @relation(fields: [wabaId], references: [id], onDelete: SetNull)
+  nomeVerificado String?   // verified_name
+  statusNome     String?   // name_status (APPROVED | PENDING_REVIEW | DECLINED…)
+  statusMeta     String?   // status cru da Graph API (CONNECTED, FLAGGED…)
+  vazao          String?   // throughput.level (STANDARD | HIGH…)
+  podeEnviar     String?   // health_status.can_send_message: AVAILABLE | LIMITED | BLOCKED
+  saude          Json?     // health_status.entities: erros e soluções que a Meta aponta
+  sincronizadoEm DateTime?
 
   @@index([bmId])
   @@index([clienteId])
+  @@index([metaPhoneId])
+  @@index([wabaId])
   @@map("numero")
 }
 
@@ -93,8 +110,18 @@ model Template {
   corpo        String
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
+  // ---- Vindo da Meta (lib/meta/sync.ts).
+  wabaId         String?
+  waba           Waba?     @relation(fields: [wabaId], references: [id], onDelete: SetNull)
+  metaTemplateId String?
+  qualidade      String    @default("sem_avaliacao") // alta | media | baixa | sem_avaliacao
+  motivoRejeicao String?
+  componentes    Json?     // components crus da Meta (header, body, footer, buttons)
+  sincronizadoEm DateTime?
 
   @@index([clienteId])
+  @@index([metaTemplateId])
+  @@index([wabaId])
   @@map("template")
 }
 
@@ -114,6 +141,41 @@ model Template {
 // =============================================================================
 
 /// Contato do tenant. Único por telefone (E.164) dentro do tenant.
+/// Conta WhatsApp Business (WABA) dentro de uma BM conectada à Meta.
+model Waba {
+  id              String     @id @default(cuid())
+  metaWabaId      String     @unique
+  bmId            String
+  bm              Bm         @relation(fields: [bmId], references: [id], onDelete: Cascade)
+  nome            String
+  statusRevisao   String?    // account_review_status: APPROVED | PENDING | REJECTED
+  podeEnviar      String?    // health_status.can_send_message: AVAILABLE | LIMITED | BLOCKED
+  saude           Json?      // health_status.entities
+  webhookAssinado Boolean    @default(false) // POST /{waba}/subscribed_apps feito
+  sincronizadoEm  DateTime?
+  criadoEm        DateTime   @default(now())
+  atualizadoEm    DateTime   @updatedAt
+  numeros         Numero[]
+  templates       Template[]
+
+  @@index([bmId])
+  @@map("waba")
+}
+
+/// Webhooks de contingência recebidos da Meta (qualidade, template, conta). Log para auditoria/diagnóstico.
+model MetaEvento {
+  id         String   @id @default(cuid())
+  campo      String   // phone_number_quality_update, message_template_status_update…
+  metaWabaId String?
+  resumo     String   // frase legível do que mudou
+  payload    Json
+  erro       String?
+  recebidoEm DateTime @default(now())
+
+  @@index([recebidoEm])
+  @@map("meta_evento")
+}
+
 model Lead {
   id               String    @id @default(cuid())
   clienteId        String?
