@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BRAND } from "@/lib/brand";
+import { BRAND, OPERATOR } from "@/lib/brand";
 import "./sobre.css";
 
 /* Página pública do Ecossistema API (o que é o serviço, como usa os dados e quem o opera).
@@ -8,7 +8,7 @@ import "./sobre.css";
 
 export const metadata: Metadata = {
   title: `${BRAND.name} · Atendimento e campanhas no WhatsApp Business`,
-  description: `O ${BRAND.name} é uma plataforma online para empresas enviarem campanhas, atenderem os seus clientes e acompanharem entregas e custos das suas contas do WhatsApp Business, pela API oficial. Operado por ${BRAND.company}.`,
+  description: `O ${BRAND.name} é uma plataforma online para empresas enviarem campanhas, atenderem os seus clientes e acompanharem entregas e custos das suas contas do WhatsApp Business, pela API oficial. Operado por ${OPERATOR}.`,
 };
 
 type IconName = "send" | "chat" | "doc" | "chart" | "lock" | "bolt" | "check" | "mail" | "phone" | "pin" | "building" | "arrow";
