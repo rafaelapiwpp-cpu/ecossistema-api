@@ -1,24 +1,29 @@
 {
   "name": "ecossistema-api",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.1.0",
-  "description": "CRM/SaaS multi-tenant para disparos via WhatsApp Cloud API oficial — painel admin + portal do cliente (white-label).",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "engines": {
-    "node": ">=20.9"
-  },
   "scripts": {
-    "dev": "npm run dev -w @eco/admin",
-    "build": "npm run build -w @eco/admin",
-    "start": "npm run start -w @eco/admin",
-    "typecheck": "npm run typecheck -w @eco/core && npm run typecheck -w @eco/admin",
-    "mock:overview": "npm run mock:overview -w @eco/core",
-    "test": "npm test --workspaces --if-present"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@xyflow/react": "^12.12.0",
+    "next": "15.5.28",
+    "nodemailer": "7.0.7",
+    "postgres": "3.4.9",
+    "react": "19.1.10",
+    "react-dom": "19.1.10",
+    "recharts": "3.10.1",
+    "unpdf": "1.7.0",
+    "xlsx": "0.18.5"
   },
   "devDependencies": {
-    "typescript": "^5.9.0"
+    "@types/node": "22.15.3",
+    "@types/nodemailer": "7.0.2",
+    "@types/react": "19.1.2",
+    "@types/react-dom": "19.1.2",
+    "typescript": "5.8.3"
   }
 }

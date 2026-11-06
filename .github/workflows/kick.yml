@@ -1,0 +1,16 @@
+# Agendador: a cada 10 minutos avisa o sistema para iniciar disparos agendados / retomar lotes parados.
+# O endpoint não expõe nada e só dispara trabalho que já estava programado.
+# Endereço: variável do repositório SITE_URL (Settings → Secrets and variables → Actions → Variables);
+# sem ela, usa o domínio de produção do projeto na Vercel.
+name: Disparos agendados
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+jobs:
+  kick:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -fsS -m 30 -X POST "${SITE_URL:-https://ecossistema-api.vercel.app}/api/campanhas/kick" || true
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}

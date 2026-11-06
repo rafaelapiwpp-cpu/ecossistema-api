@@ -1,10 +1,8 @@
+# Verificação de todo push e PR: instala, confere os tipos e faz o build (sem banco: modo demonstração).
 name: CI
-
 on:
   push:
-    branches: [main, "ci/**", "feat/**"]
   pull_request:
-
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -14,13 +12,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Instalar
-        run: npm install --no-audit --no-fund
-      - name: Typecheck
-        run: npm run typecheck
-      - name: Testes
-        run: npm test --if-present
-      # Build sem tocar no banco: o `build` do admin faz `prisma db push`, que é
-      # coisa de deploy (Vercel). Aqui só gera o cliente e compila.
-      - name: Build admin
-        run: npx -w @eco/admin prisma generate && npm exec -w @eco/admin -- next build
+      # sem package-lock no repositório (como na Vercel): instala pelas versões do package.json
+      - run: npm install --no-audit --no-fund
+      - name: Tipos
+        run: npx tsc --noEmit -p .
+      - name: Build
+        run: npx next build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
