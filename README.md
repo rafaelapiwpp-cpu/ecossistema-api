@@ -7,7 +7,8 @@ automáticos, leads/funil, contatos, gerenciador de templates, conexões por BM 
 
 - **Next.js 15** (App Router) + React 19 + TypeScript, hospedado na Vercel. **PostgreSQL** (Neon) via `POSTGRES_URL` ou `DATABASE_URL`.
 - Na primeira abertura, a tela `/setup` cria as tabelas, o usuário **Master** e guarda o token do usuário do sistema,
-  a chave secreta do app e o ID do portfólio (BM) da Meta, tudo no banco. Não há segredos em variáveis de ambiente.
+  a chave secreta do app e o ID do portfólio (BM) da Meta, tudo no banco. Com a variável `SECRETS_KEY` definida na Vercel,
+  esses segredos ficam **cifrados** no banco (AES-256-GCM, `lib/secrets.ts`); a tela Configurações mostra o estado e gera a chave.
 - Banco: `lib/schema.ts` migra sozinho (comandos idempotentes; mudança = acrescentar no fim e subir `SCHEMA_VERSION`).
 - `/api/sync` busca os dados na Graph API (cron diário em `vercel.json` ou botão "Sincronizar agora").
 - `/api/webhook` recebe as notificações da Meta (assinatura validada com a chave secreta do app).

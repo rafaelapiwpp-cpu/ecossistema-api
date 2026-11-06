@@ -3,6 +3,7 @@
 import { query } from "./db";
 import { Graph, MetaError } from "./meta";
 import type { Settings } from "./settings";
+import { unseal } from "./secrets";
 
 export type Visibility = "private" | "team";
 export type Connection = {
@@ -18,9 +19,12 @@ export type Connection = {
 
 export const VISIBILITY_LABEL: Record<Visibility, string> = { private: "Só Master", team: "Equipe" };
 
+/** Linha do banco → conexão com token e chave do app decifrados (lib/secrets). */
+const opened = (c: Connection): Connection => ({ ...c, token: unseal(c.token), app_secret: unseal(c.app_secret) });
+
 export async function listConnections(): Promise<Connection[]> {
   try {
-    return await query<Connection>("select * from connections order by visibility = 'private' desc, lower(name), id");
+    return (await query<Connection>("select * from connections order by visibility = 'private' desc, lower(name), id")).map(opened);
   } catch (e: any) {
     if (e?.code === "42P01") return []; // antes da migração
     throw e;
@@ -29,7 +33,7 @@ export async function listConnections(): Promise<Connection[]> {
 
 export async function getConnection(id: number): Promise<Connection | null> {
   const [c] = await query<Connection>("select * from connections where id = $1", [id]);
-  return c || null;
+  return c ? opened(c) : null;
 }
 
 // cache curto (por instância) para não consultar o banco a cada envio
@@ -49,12 +53,12 @@ async function cached(map: Map<string, Cached>, key: string, load: () => Promise
 
 export function connectionForWaba(wabaId: string) {
   return cached(byWaba, wabaId, async () =>
-    (await query<Connection>("select c.* from wabas w join connections c on c.id = w.connection_id where w.id = $1", [wabaId]))[0] || null);
+    (await query<Connection>("select c.* from wabas w join connections c on c.id = w.connection_id where w.id = $1", [wabaId])).map(opened)[0] || null);
 }
 
 export function connectionForPhone(phoneNumberId: string) {
   return cached(byPhone, phoneNumberId, async () =>
-    (await query<Connection>("select c.* from phone_numbers p join wabas w on w.id = p.waba_id join connections c on c.id = w.connection_id where p.id = $1", [phoneNumberId]))[0] || null);
+    (await query<Connection>("select c.* from phone_numbers p join wabas w on w.id = p.waba_id join connections c on c.id = w.connection_id where p.id = $1", [phoneNumberId])).map(opened)[0] || null);
 }
 
 /** Graph com o token da conexão (ou o token antigo das Configurações, para contas ainda sem conexão). */
@@ -86,7 +90,10 @@ export async function appSecrets(s: Settings): Promise<string[]> {
   const out = new Set<string>();
   if (s.meta_app_secret) out.add(s.meta_app_secret);
   try {
-    for (const r of await query<{ app_secret: string }>("select distinct app_secret from connections where coalesce(app_secret, '') <> ''")) out.add(r.app_secret);
+    for (const r of await query<{ app_secret: string }>("select distinct app_secret from connections where coalesce(app_secret, '') <> ''")) {
+      const v = unseal(r.app_secret);
+      if (v) out.add(v);
+    }
   } catch { /* tabela ainda não existe */ }
   return [...out];
 }
@@ -96,6 +103,7 @@ export async function appSecrets(s: Settings): Promise<string[]> {
  * o token e o app a que ele pertence (um token só funciona com o app em que foi gerado — upload de mídia e webhook).
  */
 export async function propagateToken(sourceId: number) {
+  // copia o valor como está gravado (cifrado ou não): não precisa decifrar para repassar
   const [src] = await query<{ token: string; app_id: string | null; app_secret: string | null }>("select token, app_id, app_secret from connections where id = $1", [sourceId]);
   if (!src?.token) return 0;
   const rows = await query<{ id: number }>(

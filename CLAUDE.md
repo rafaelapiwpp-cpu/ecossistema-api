@@ -10,7 +10,9 @@ Nasceu do código do "HUB API" (06/11/2026), sem histórico, sem dados de client
 - Next.js 15 (App Router) + React 19 + TypeScript; Postgres pelo cliente `postgres` (`lib/db.ts`: `query`, `db().unsafe`).
 - Repositório: `rafaelapiwpp-cpu/ecossistema-api` (**público**: nada de segredo, hash de senha ou dado pessoal no código).
 - Produção: Vercel, projeto `ecossistema-api` (Root Directory = raiz do repositório), banco Neon. `main` = produção.
-- Configuração fica na tabela `settings` (não em variáveis), exceto `POSTGRES_URL`/`DATABASE_URL` e `HUB_MAIL_*`.
+- Configuração fica na tabela `settings` (não em variáveis), exceto `POSTGRES_URL`/`DATABASE_URL`, `HUB_MAIL_*` e
+  `SECRETS_KEY` (chave que cifra no banco os tokens da Meta, as chaves dos apps e a senha do e-mail — `lib/secrets.ts`).
+  Gravou segredo novo? Passe por `seal()`; leu direto do banco? `unseal()` (ou use `getSettings`/`lib/connections`).
 
 ## Mapa
 - `lib/schema.ts` — esquema e migração automática (`migrateOnce`). Mudança de banco = **acrescentar** comandos
@@ -41,8 +43,8 @@ Nasceu do código do "HUB API" (06/11/2026), sem histórico, sem dados de client
 
 ## Testar
 - `npx tsc --noEmit -p .` e `npx next build` antes de publicar.
-- No PC do Rafa: `Downloads\HUB API\INICIAR-HUB-LOCAL.cmd` sobe Postgres portátil + banco de teste fictício + Meta simulada
-  + o sistema em http://localhost:3123 (login de teste `master` / `master-local-123`).
+- No PC do Rafa: `Downloads\HUB API\INICIAR-ECOSSISTEMA-LOCAL.cmd` baixa/atualiza este repositório e sobe Postgres portátil
+  + banco de teste fictício + Meta simulada + o sistema em http://localhost:3123 (login de teste `master` / `master-local-123`).
 
 ## Economia de tokens
 - Uma tarefa por sessão; começar por este arquivo, sem reler o projeto inteiro.

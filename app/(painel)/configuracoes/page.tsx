@@ -9,6 +9,7 @@ import { requirePage } from "@/lib/guard";
 import { isMaster } from "@/lib/roles";
 import { mailConfig, mailFromEnv } from "@/lib/mail";
 import { recoveryAddress } from "@/lib/password-reset";
+import { newSecretsKey, secretsEnabled } from "@/lib/secrets";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +62,13 @@ export default async function Configuracoes({ searchParams }: { searchParams: Pr
       {sp.erro && MAIL_ERR[sp.erro] && <div className="banner"><span className="err">{MAIL_ERR[sp.erro]}{sp.detalhe ? `: ${sp.detalhe}` : "."}</span></div>}
       {sp.mail_ok && <div className="banner"><span className="ok">E-mail de teste enviado para {sp.mail_ok}. Confira a caixa de entrada (e o spam).</span></div>}
       {!hasDb() && <div className="banner"><b>Modo demonstração.</b> Sem banco de dados conectado, nada pode ser salvo aqui.</div>}
+      {master && hasDb() && (secretsEnabled()
+        ? <div className="banner"><span className="ok">Tokens protegidos:</span> os tokens da Meta, as chaves secretas dos apps e a senha do e-mail ficam cifrados no banco (chave <code>SECRETS_KEY</code> na Vercel). Não apague nem troque essa chave: sem ela, os tokens precisam ser colados de novo.</div>
+        : <div className="banner">
+            <b>Proteja os tokens:</b> hoje eles ficam no banco sem cifra. Na Vercel, abra o projeto → <b>Settings → Environment Variables</b>, crie a variável <code>SECRETS_KEY</code> com o valor abaixo (Production, Preview e Development) e faça um novo deploy. Os tokens já salvos são cifrados sozinhos no primeiro acesso.
+            <div style={{ marginTop: 8 }}><code style={{ userSelect: "all", wordBreak: "break-all" }}>{newSecretsKey()}</code></div>
+            <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>Chave gerada agora só para você; ela não fica salva em lugar nenhum. Guarde uma cópia num lugar seguro.</div>
+          </div>)}
 
       {/* portal de clientes: empresas, números, usuários-cliente e funis */}
       {hasDb() && <div id="empresas" style={{ marginBottom: 16 }}><Companies /></div>}

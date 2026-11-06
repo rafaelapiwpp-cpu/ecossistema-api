@@ -10,6 +10,7 @@ import { Graph } from "@/lib/meta";
 import { listWabas, runSync, type LogLine } from "@/lib/sync";
 import { tokenStatus } from "@/lib/webhook-diag";
 import { siteUrl } from "@/lib/site";
+import { seal } from "@/lib/secrets";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -108,7 +109,7 @@ export async function POST(req: Request) {
             `update connections set name = $2, visibility = $3, business_id = $4, token = coalesce(nullif($5, ''), token), app_id = $6,
                app_secret = case when $6::text is null then null else coalesce(nullif($7, ''), app_secret) end,
                waba_ids = $8, description = $9, updated_at = now() where id = $1`,
-            [id, name, visibility, business_id, token, app_id, app_secret, waba_ids, description],
+            [id, name, visibility, business_id, seal(token), app_id, seal(app_secret), waba_ids, description],
           );
           await propagateToken(id); // conexões criadas a partir desta acompanham token e app
         } else {
@@ -116,7 +117,7 @@ export async function POST(req: Request) {
           if (own && !app_secret) return bad("Informe a chave secreta do app próprio (necessária para validar o webhook)");
           const [row] = await query<{ id: number }>(
             `insert into connections (name, visibility, business_id, token, app_id, app_secret, waba_ids, description, created_by) values ($1, $2, $3, $4, $5, nullif($6, ''), $7, $8, $9) returning id`,
-            [name, visibility, business_id, token, app_id, app_secret, waba_ids, description, user.id],
+            [name, visibility, business_id, seal(token), app_id, seal(app_secret), waba_ids, description, user.id],
           );
           cur = await getConnection(row.id);
         }
@@ -238,7 +239,7 @@ export async function POST(req: Request) {
           }
           await query(
             "update connections set source_connection_id = $2, token = $3, app_id = $4, app_secret = $5, updated_at = now() where id = $1",
-            [r.id, target.id, target.token, target.app_id, target.app_secret],
+            [r.id, target.id, seal(target.token), target.app_id, seal(target.app_secret)],
           );
           moved.push({ id: r.id, name: r.name, wabas: r.wabas.length });
         }
@@ -353,13 +354,13 @@ export async function POST(req: Request) {
               `update connections set waba_ids = $2, token = case when source_connection_id = $3 then $4 else token end,
                  app_id = case when source_connection_id = $3 then $5 else app_id end, app_secret = case when source_connection_id = $3 then $6 else app_secret end,
                  updated_at = now() where id = $1`,
-              [existing.id, merged, src.id, src.token, src.app_id, src.app_secret],
+              [existing.id, merged, src.id, seal(src.token), src.app_id, seal(src.app_secret)],
             );
             connId = existing.id;
           } else {
             const [row] = await query<{ id: number }>(
               `insert into connections (name, visibility, business_id, business_name, token, app_id, app_secret, waba_ids, source_connection_id, created_by) values ($1, $2, $3, $1, $4, $5, $6, $7, $8, $9) returning id`,
-              [name, visibility, ownerId, src.token, src.app_id, src.app_secret, ids.join(","), src.id, user.id],
+              [name, visibility, ownerId, seal(src.token), src.app_id, seal(src.app_secret), ids.join(","), src.id, user.id],
             );
             connId = row.id;
           }

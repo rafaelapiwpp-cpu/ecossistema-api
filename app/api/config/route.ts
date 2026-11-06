@@ -5,6 +5,7 @@ import { isMaster } from "@/lib/roles";
 import { BRAND } from "@/lib/brand";
 import { isEmail, mailConfig, mailFromEnv, sendMail } from "@/lib/mail";
 import { recoveryAddress } from "@/lib/password-reset";
+import { seal } from "@/lib/secrets";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
     await query(
       `update settings set mail_from = nullif($1, ''), mail_user = nullif($2, ''), mail_pass = coalesce(nullif($3, ''), mail_pass),
          mail_host = nullif($4, ''), mail_port = nullif($5, 0), updated_at = now() where id = 1`,
-      [from, user, pass, host, port],
+      [from, user, seal(pass), host, port],
     );
     if (f.get("mail_clear") === "on") await query("update settings set mail_pass = null, updated_at = now() where id = 1");
     return back("ok=1#email");
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
     const insights = f.get("insights_enabled") === "on";
     await query(
       `update settings set meta_app_secret = coalesce(nullif($1, ''), meta_app_secret), meta_app_id = nullif($2, ''), insights_enabled = $3, updated_at = now() where id = 1`,
-      [secret, appId, insights],
+      [seal(secret), appId, insights],
     );
     return back("ok=1");
   }
