@@ -61,6 +61,9 @@ function Ring({ value, total }: { value: number; total: number }) {
 }
 
 /** Mini-barras dos últimos 7 dias. */
+/** Contagem para o portal: acima de 999 aparece "+999". */
+const n999 = (v: number) => (v > 999 ? "+999" : String(v));
+
 function Spark({ values, labels }: { values: number[]; labels: string[] }) {
   const max = Math.max(1, ...values);
   return (
@@ -147,7 +150,7 @@ export default function PortalHome({ company, userName }: { company: Brand; user
           <div className="ph-glass-stats">
             <span><b>{d ? d.team ?? "–" : "–"}</b>{d && d.team === 1 ? "atendente" : "atendentes"}</span>
             <span><b>{d?.funnel ? d.funnel.total : "–"}</b>{d?.funnel && d.funnel.total === 1 ? "lead no funil" : "leads no funil"}</span>
-            <span><b>{c ? c.in_today + c.out_today : "–"}</b>{c && c.in_today + c.out_today === 1 ? "mensagem hoje" : "mensagens hoje"}</span>
+            <span><b>{c ? n999(c.in_today + c.out_today) : "–"}</b>{c && c.in_today + c.out_today === 1 ? "mensagem hoje" : "mensagens hoje"}</span>
           </div>
         </aside>
       </section>
@@ -168,7 +171,7 @@ export default function PortalHome({ company, userName }: { company: Brand; user
           {series.length > 0 && <Spark values={series.map((s) => s.closed)} labels={labels} />}
         </div>
         <div className="ph-stat msgs">
-          <div className="ph-stat-main"><span className="ph-stat-ico"><Icon name="send" size={18} className="" /></span><b>{c ? c.in_today : "–"}</b><span>Recebidas hoje</span><em>{c ? `${c.out_today} enviada${c.out_today === 1 ? "" : "s"}` : ""}</em></div>
+          <div className="ph-stat-main"><span className="ph-stat-ico"><Icon name="send" size={18} className="" /></span><b>{c ? n999(c.in_today) : "–"}</b><span>Recebidas hoje</span><em>{c ? `${n999(c.out_today)} enviada${c.out_today === 1 ? "" : "s"}` : ""}</em></div>
           {series.length > 0 && <Spark values={series.map((s) => s.in)} labels={labels} />}
         </div>
       </section>
@@ -207,9 +210,9 @@ export default function PortalHome({ company, userName }: { company: Brand; user
             {!d && <div className="ph-skel" aria-hidden />}
             {series.length > 0 && (
               <>
-                <div className="ph-chart" role="img" aria-label={`Mensagens por dia: ${series.map((s) => `${dayLong(s.day)} ${s.in} recebidas e ${s.out} enviadas`).join("; ")}`}>
+                <div className="ph-chart" role="img" aria-label={`Mensagens por dia: ${series.map((s) => `${dayLong(s.day)} ${n999(s.in)} recebidas e ${n999(s.out)} enviadas`).join("; ")}`}>
                   {series.map((s, i) => (
-                    <div key={s.day} className={`ph-day${i === series.length - 1 ? " now" : ""}`} title={`${dayLong(s.day)}: ${s.in} recebida${s.in === 1 ? "" : "s"} · ${s.out} enviada${s.out === 1 ? "" : "s"} · ${s.closed} encerrada${s.closed === 1 ? "" : "s"}`}>
+                    <div key={s.day} className={`ph-day${i === series.length - 1 ? " now" : ""}`} title={`${dayLong(s.day)}: ${n999(s.in)} recebida${s.in === 1 ? "" : "s"} · ${n999(s.out)} enviada${s.out === 1 ? "" : "s"} · ${n999(s.closed)} encerrada${s.closed === 1 ? "" : "s"}`}>
                       <div className="ph-bars">
                         <i className="in" style={{ height: `${s.in ? Math.max(4, Math.round((s.in / maxBar) * 100)) : 0}%` }} />
                         <i className="out" style={{ height: `${s.out ? Math.max(4, Math.round((s.out / maxBar) * 100)) : 0}%` }} />
@@ -219,7 +222,7 @@ export default function PortalHome({ company, userName }: { company: Brand; user
                   ))}
                 </div>
                 <div className="ph-week">
-                  <span><b>{sum("in")}</b> recebidas</span><span><b>{sum("out")}</b> enviadas</span><span><b>{sum("started")}</b> conversas novas</span><span><b>{sum("closed")}</b> encerradas</span>
+                  <span><b>{n999(sum("in"))}</b> recebidas</span><span><b>{n999(sum("out"))}</b> enviadas</span><span><b>{n999(sum("started"))}</b> conversas novas</span><span><b>{n999(sum("closed"))}</b> encerradas</span>
                 </div>
                 {sum("in") + sum("out") === 0 && <p className="muted" style={{ margin: "8px 0 0", fontSize: 12.5 }}>Sem mensagens nos últimos 7 dias. Quando o movimento começar, o gráfico mostra o ritmo de cada dia.</p>}
               </>

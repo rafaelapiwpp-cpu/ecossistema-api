@@ -84,7 +84,7 @@ export async function GET(req: Request) {
   const W = where.join(" and ");
   const WEEK = `(${TODAY} - interval '6 days')`; // últimos 7 dias, hoje incluído
   const DAY = (col: string) => `to_char((${col} at time zone '${TZ}')::date, 'YYYY-MM-DD')`;
-  const [byStatus, byPhone, today, closedToday, waiting, numbers, pipe, msgDays, closedDays, startedDays, team] = await Promise.all([
+  const [byStatus, byPhone, today, closedToday, waiting, numbers, pipe, msgDays, closedDays, startedDays, team, metaSent] = await Promise.all([
     query<{ status: string; n: string; unread: string }>(`select c.status, count(*)::text as n, coalesce(sum(c.unread_count), 0)::text as unread from conversations c where ${W} group by c.status`, args),
     query<{ phone_number_id: string; status: string; n: string }>(`select c.phone_number_id, c.status, count(*)::text as n from conversations c where ${W} group by c.phone_number_id, c.status`, args),
     query<{ direction: string; n: string }>(`select m.direction, count(*)::text as n from messages m where m.phone_number_id = any($1::text[]) and m.ts >= ${TODAY} group by m.direction`, [phones]),
@@ -99,6 +99,11 @@ export async function GET(req: Request) {
     query<{ day: string; n: string }>(`select ${DAY("c.closed_at")} as day, count(*)::text as n from conversations c where ${W} and c.status = 'closed' and c.closed_at >= ${WEEK} group by 1`, args),
     query<{ day: string; n: string }>(`select ${DAY("c.created_at")} as day, count(*)::text as n from conversations c where ${W} and c.created_at >= ${WEEK} group by 1`, args),
     query<{ n: string }>("select count(*)::text as n from users where company_id = $1 and active", [company.id]),
+    // envios que a própria Meta contou por número e dia (sincronização): cobre disparos feitos por outro sistema
+    // ou antes de o webhook apontar para cá, que não viraram mensagem aqui
+    query<{ day: string; n: string }>(`select to_char(d.day, 'YYYY-MM-DD') as day, sum(d.sent)::text as n
+       from daily_messages d join phone_numbers p on p.waba_id = d.waba_id and p.phone_digits = d.phone_digits
+       where p.id = any($1::text[]) and d.day >= (${WEEK} at time zone '${TZ}')::date group by 1`, [phones]),
   ]);
   const old = numbers.filter((n) => picStale(n.profile_picture_at)).map((n) => n.id);
   if (old.length) after(async () => { for (const id of old) await refreshPicture(r.s, id); });
@@ -117,6 +122,9 @@ export async function GET(req: Request) {
   for (const x of msgDays) { const s = at(x.day); if (s) s[x.direction === "out" ? "out" : "in"] += Number(x.n); }
   for (const x of closedDays) { const s = at(x.day); if (s) s.closed = Number(x.n); }
   for (const x of startedDays) { const s = at(x.day); if (s) s.started = Number(x.n); }
+  // enviadas = o maior entre o que passou por aqui e o que a Meta contou no dia
+  for (const x of metaSent) { const s = at(x.day); if (s) s.out = Math.max(s.out, Number(x.n)); }
+  msgs.out = Math.max(msgs.out, series[series.length - 1].out);
   return NextResponse.json({
     company: brand,
     me: { id: r.user.id, name: r.user.name, role: r.user.role },
