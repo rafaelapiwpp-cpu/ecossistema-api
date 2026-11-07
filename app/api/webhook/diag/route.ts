@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { requireSession } from "@/lib/guard";
 import { siteUrl } from "@/lib/site";
-import { configureApp, diagnose, subscribeAll } from "@/lib/webhook-diag";
+import { configureApp, diagnose, routeNumbersHere, subscribeAll } from "@/lib/webhook-diag";
 import { getScope } from "@/lib/access";
 import { isMaster } from "@/lib/roles";
 import { replayEchoes } from "@/lib/chat";
@@ -33,6 +33,12 @@ export async function POST(req: Request) {
       // mensagens enviadas pelo celular que chegaram antes de o HUB tratar o campo (ficaram guardadas no log do webhook)
       if (!isMaster(r.user.role)) return NextResponse.json({ error: "Só o Master reprocessa o log do webhook" }, { status: 403 });
       return NextResponse.json({ ok: true, ...(await replayEchoes(Number(body.hours) || 72)) });
+    }
+    if (body.action === "route_numbers") {
+      // muda a configuração de webhook dos números na Meta: só o Master
+      if (!isMaster(r.user.role)) return NextResponse.json({ error: "Só o Master muda para onde vão as mensagens dos números" }, { status: 403 });
+      const results = await routeNumbersHere(r.s, base, scope);
+      return NextResponse.json({ ok: results.every((x) => x.ok), results, diagnosis: await diagnose(r.s, base, scope) });
     }
     if (body.action === "subscribe_wabas") {
       const results = await subscribeAll(r.s, scope);

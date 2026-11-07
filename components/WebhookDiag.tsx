@@ -20,7 +20,7 @@ export default function WebhookDiag({ demo, master = true }: { demo: boolean; ma
     } catch (e: any) { setMsg({ ok: false, text: e.message }); }
     setBusy(null);
   }
-  async function act(action: "configure_app" | "subscribe_wabas") {
+  async function act(action: "configure_app" | "subscribe_wabas" | "route_numbers") {
     setBusy(action); setMsg(null);
     try {
       const r = await fetch("/api/webhook/diag", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action }) });
@@ -28,8 +28,9 @@ export default function WebhookDiag({ demo, master = true }: { demo: boolean; ma
       if (!r.ok) throw new Error(j.error || "Falhou");
       if (j.diagnosis) setD(j.diagnosis);
       const fails = (j.results || []).filter((x: any) => !x.ok);
-      setMsg(fails.length ? { ok: false, text: `${fails.length} conta(s) não puderam ser inscritas: ${fails.map((f: any) => `${f.name || f.id} (${f.error})`).join("; ")}` }
-        : { ok: true, text: action === "configure_app" ? "Webhook configurado no app da Meta." : "Todas as contas inscritas." });
+      const what = action === "route_numbers" ? "número(s) não puderam ser apontados" : "conta(s) não puderam ser inscritas";
+      setMsg(fails.length ? { ok: false, text: `${fails.length} ${what}: ${fails.map((f: any) => `${f.name || f.id} (${f.error})`).join("; ")}` }
+        : { ok: true, text: action === "configure_app" ? "Webhook configurado no app da Meta." : action === "route_numbers" ? "Pronto: as mensagens desses números passam a chegar aqui." : "Todas as contas inscritas." });
     } catch (e: any) { setMsg({ ok: false, text: e.message }); }
     setBusy(null);
   }
@@ -97,6 +98,14 @@ export default function WebhookDiag({ demo, master = true }: { demo: boolean; ma
               <div className="err" style={{ marginTop: 8 }}>
                 {routesBad} número(s) com as mensagens indo para outro endereço: nada deles chega ao Atendimento. Acontece quando o número foi
                 ligado antes a outra ferramenta (desvio no número ou na conta) ou quando o token da conexão é de um app diferente do configurado no item 1.
+                {master && (
+                  <div style={{ marginTop: 8 }}>
+                    <span className="muted">Ao apontar para cá, o endereço antigo deixa de receber as mensagens desses números.</span><br />
+                    <button className="btn" style={{ marginTop: 6 }} onClick={() => act("route_numbers")} disabled={busy !== null}>
+                      {busy === "route_numbers" ? "Apontando…" : `Trazer as mensagens desses ${routesBad} número(s) para cá`}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
             {d.wabas.length > 0 && wabasOk < d.wabas.length && (

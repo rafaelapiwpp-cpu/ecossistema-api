@@ -106,6 +106,30 @@ export async function configureApp(s: Settings, base: string) {
   });
 }
 
+/**
+ * Aponta para este sistema os números cujos eventos a Meta manda para outro endereço (desvio gravado no número
+ * por outra ferramenta que usou o mesmo app). Grava no número o nosso endereço e o token de verificação;
+ * a Meta confere o endereço na hora. Depois disso, o outro endereço deixa de receber as mensagens desses números.
+ */
+export async function routeNumbersHere(s: Settings, base: string, scope?: Scope | null) {
+  const target = `${base}/api/webhook`;
+  const results: { id: string; name: string | null; ok: boolean; error?: string }[] = [];
+  for (const w of await wabaStatuses(s, scope, base)) {
+    const off = (w.numbers || []).filter((n) => !n.error && !n.ours);
+    if (!off.length) continue;
+    const g = await graphForWaba(s, w.id);
+    for (const n of off) {
+      try {
+        await g.json(n.id, { webhook_configuration: { override_callback_uri: target, verify_token: s.webhook_verify_token } });
+        results.push({ id: n.id, name: n.display, ok: true });
+      } catch (e: any) {
+        results.push({ id: n.id, name: n.display, ok: false, error: e.message });
+      }
+    }
+  }
+  return results;
+}
+
 export async function wabaStatuses(s: Settings, scope?: Scope | null, base?: string): Promise<WabaStatus[]> {
   const wabas = await visibleWabas(scope);
   const expected = base ? `${base}/api/webhook` : null;
