@@ -1,13 +1,14 @@
 "use client";
 // Portal em prévia de treinamento (recurso "previa" da empresa): faixa fixa no topo de todas as telas e um aviso
-// que abre logo ao entrar (uma vez por sessão do navegador) explicando que é um acesso temporário, só para conhecer.
+// que abre logo ao entrar (a cada login e a cada aba nova) explicando que é um acesso temporário, só para conhecer.
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Nav";
 
 export default function PreviewNotice({ company, slug }: { company: string; slug: string }) {
   const [open, setOpen] = useState(false);
   const btn = useRef<HTMLButtonElement>(null);
-  const key = `previa-vista:${slug}`;
+  // prefixo "hub.": as telas de login apagam essas marcas, então o aviso volta a abrir a cada login
+  const key = `hub.previa-vista:${slug}`;
 
   useEffect(() => {
     let seen = false;
