@@ -12,7 +12,7 @@ type Summary = {
   company: { id: number; name: string; slug: string; tagline: string | null; logo: string | null };
   me: { id: number; name: string; role: string };
   counts: { open: number; pending: number; closed: number; unread: number; closed_today: number; in_today: number; out_today: number };
-  numbers: { id: string; display_phone_number: string; verified_name: string | null; label: string | null; quality_rating: string | null; picture: string | null; open: number; pending: number; closed: number }[];
+  numbers: { id: string; display_phone_number: string; verified_name: string | null; label: string | null; quality_rating: string | null; picture: string | null; open: number; pending: number; closed: number; inactive?: boolean }[];
   waiting: { id: number; last_preview: string | null; last_message_at: string | null; unread_count: number; status: string; contact_name: string | null; contact_phone: string; department_name: string | null; department_color: string | null }[];
   funnel: { id: number; name: string; total: number; value_open?: number; value_won?: number; stages: { id: number; name: string; color: string | null; kind: string; n: number; value?: number }[] } | null;
   series?: Day[];
@@ -136,7 +136,7 @@ export default function PortalHome({ company, userName }: { company: Brand; user
               {d.numbers.length === 1 && n0 ? (
                 <>
                   <span className="ph-glass-pic"><Pic src={n0.picture} fallback={<b>{initials(n0.label || n0.verified_name, n0.display_phone_number.slice(-2))}</b>} /><i className="wa" aria-hidden><Icon name="chat" size={9} className="" /></i></span>
-                  <div><b>{n0.label || n0.verified_name || "WhatsApp"}</b><span>{n0.display_phone_number}{q0 ? ` · ${q0[1].replace("Qualidade ", "qualidade ")}` : ""}</span></div>
+                  <div><b>{n0.label || n0.verified_name || "WhatsApp"}</b><span>{n0.display_phone_number}{q0 ? ` · ${q0[1].replace("Qualidade ", "qualidade ")}` : ""}{n0.inactive ? " · inativo na plataforma" : ""}</span></div>
                   {q0 && <i className={`q ${q0[0]}`} title={q0[1]} />}
                 </>
               ) : (
@@ -246,7 +246,10 @@ export default function PortalHome({ company, userName }: { company: Brand; user
                       <span>{n.display_phone_number}{n.label && n.verified_name ? ` · ${n.verified_name}` : ""}</span>
                       <div className="ph-num-counts"><em className="wait"><b>{n.open}</b> aguardando</em><em className="going"><b>{n.pending}</b> em andamento</em><em><b>{n.closed}</b> encerradas</em></div>
                     </div>
-                    {q && <span className={`ph-q ${q[0]}`} title={q[1]}><i />{q[1].replace("Qualidade ", "")}</span>}
+                    <div className="ph-num-tags">
+                      {q && <span className={`ph-q ${q[0]}`} title={q[1]}><i />{q[1].replace("Qualidade ", "")}</span>}
+                      {n.inactive && <span className="ph-q off" title="Número ainda não ativado nesta plataforma">Inativo na plataforma</span>}
+                    </div>
                   </li>
                 );
               })}

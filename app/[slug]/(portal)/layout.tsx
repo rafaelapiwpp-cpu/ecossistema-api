@@ -9,7 +9,8 @@ import { hasDb } from "@/lib/db";
 import { getSession } from "@/lib/guard";
 import { companyBySlug } from "@/lib/access";
 import { isClient, isManagerRole } from "@/lib/roles";
-import { companyThemeCss, hasFeature, logoSrc, safeHex } from "@/lib/companies";
+import { companyThemeCss, hasFeature, isPreview, logoSrc, safeHex } from "@/lib/companies";
+import PreviewNotice from "@/components/PreviewNotice";
 
 export const dynamic = "force-dynamic";
 
@@ -66,12 +67,13 @@ export default async function PortalLayout({ children, params }: { children: Rea
   ];
   const navUser = { name: user.name, role: user.role, roleLabel: isClient(user.role) ? company.name : "Equipe" };
   const logo = logoSrc(company);
+  const preview = isPreview(company);
   const brand = logo
     ? <img className="pb-logo" src={logo} alt="" />
     : <span className="pb-mark" aria-hidden>{initials(company.name)}</span>;
 
   return (
-    <div className="shell portal" data-cat={`${user.id}.c${company.id}`} data-company={company.slug} data-company-name={company.name} data-logo={logo || ""}>
+    <div className="shell portal" data-cat={`${user.id}.c${company.id}`} data-company={company.slug} data-company-name={company.name} data-logo={logo || ""} data-previa={preview ? "1" : undefined}>
       <style dangerouslySetInnerHTML={{ __html: companyThemeCss(company.primary_color, company.secondary_color) }} />
       <aside className="side">
         <div className="brand pb">
@@ -96,6 +98,7 @@ export default async function PortalLayout({ children, params }: { children: Rea
           <Link className="pb-link" href={base}><span className="pb-tile">{brand}</span><span className="pb-text"><b className="pb-name">{company.name}</b><span className="pb-tag">{company.tagline || "Portal de atendimento"}</span></span></Link>
           <span className="avatar pb-top-user" title={user.name}>{initials(user.name)}</span>
         </div>
+        {preview && <PreviewNotice company={company.name} slug={company.slug} />}
         {children}
       </main>
       <Suspense><ScrollTitle /></Suspense>

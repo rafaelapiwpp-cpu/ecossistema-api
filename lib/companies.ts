@@ -49,8 +49,19 @@ export const QUICK_VARS: { key: string; label: string }[] = [
  */
 export const FEATURES: { key: string; label: string; help: string }[] = [
   { key: "teleentrega", label: "Tele-entrega", help: "Tela de faixas de CEP e custo por km no portal, e o atalho de consulta no Atendimento." },
+  { key: "previa", label: "Prévia de treinamento", help: "Portal só para o cliente conhecer: aviso de acesso temporário ao entrar, atendimento sem enviar mensagens e números como inativos na plataforma. Desligue quando a conta entrar em uso." },
 ];
 export const hasFeature = (c: { features?: Record<string, boolean> | null } | null | undefined, key: string) => !!c?.features && c.features[key] === true;
+
+/** Portal em prévia de treinamento (recurso "previa"): só visualização, sem enviar mensagens. */
+export const isPreview = (c: { features?: Record<string, boolean> | null } | null | undefined) => hasFeature(c, "previa");
+
+/**
+ * Números na prévia de treinamento: aparecem como inativos na plataforma e com qualidade alta ou média
+ * (alta continua alta; média, baixa ou sem avaliação aparecem como média). A qualidade real segue no painel interno.
+ */
+export const previewNumber = <T extends { quality_rating: string | null }>(n: T): T & { inactive: true } =>
+  ({ ...n, quality_rating: (n.quality_rating || "").toUpperCase() === "GREEN" ? "GREEN" : "YELLOW", inactive: true });
 
 /** "Farmácia São José" → "farmacia-sao-jose" */
 export const slugify = (v: string) => v.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);

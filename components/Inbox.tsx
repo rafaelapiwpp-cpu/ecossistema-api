@@ -194,6 +194,10 @@ export default function Inbox() {
 
   useEffect(() => { loadCatalog<Catalog>(setCatalog, (e) => setError(e.message)); }, []);
   useEffect(() => { const el = document.querySelector<HTMLElement>("[data-company-name]"); if (el) setBrand({ name: el.dataset.companyName || "", logo: el.dataset.logo || "" }); }, []);
+  // portal em prévia de treinamento (recurso "previa" da empresa): só visualização, sem caixa de resposta
+  const [preview, setPreview] = useState(false);
+  const previewRef = useRef(false);
+  useEffect(() => { const on = !!document.querySelector("[data-previa]"); previewRef.current = on; setPreview(on); }, []);
   // a largura que vale é a da área do Atendimento (tela menos o menu lateral, aberto ou recolhido), não a da janela
   useEffect(() => {
     const el = atRef.current;
@@ -279,7 +283,7 @@ export default function Inbox() {
       const j: Thread = await api(`/api/conversations/${id}`);
       if (selectedRef.current !== id) return; // já abriu outra
       setThread(j); cacheSet(tkey(id), j); lastIdRef.current = j.messages.at(-1)?.id || 0;
-      if (j.conv.unread_count > 0) api(`/api/conversations/${id}`, { action: "read" }).then(loadList).catch(() => {});
+      if (j.conv.unread_count > 0 && !previewRef.current) api(`/api/conversations/${id}`, { action: "read" }).then(loadList).catch(() => {});
       if (!cached) toBottom(); else requestAnimationFrame(keepBottom);
     } catch (e: any) { if (!cached) setError(e.message); }
   }, [loadList, keepBottom]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -323,7 +327,7 @@ export default function Inbox() {
       });
       if (incoming.length) {
         requestAnimationFrame(keepBottom);
-        if (incoming.some((m) => m.direction === "in")) api(`/api/conversations/${id}`, { action: "read" }).catch(() => {});
+        if (incoming.some((m) => m.direction === "in") && !previewRef.current) api(`/api/conversations/${id}`, { action: "read" }).catch(() => {});
       }
     } catch { /* confere de novo no próximo aviso */ }
     finally {
@@ -724,6 +728,11 @@ export default function Inbox() {
 
             {error && <div className="at-cerror">{error}</div>}
 
+            {preview ? (
+              <footer className="at-composer">
+                <div className="at-notice"><Icon name="alert" size={16} className="" /><span><b>Prévia de treinamento.</b> Aqui você conhece como o atendimento funciona. Enviar e responder mensagens ainda não está liberado nesta conta.</span></div>
+              </footer>
+            ) : (
             <footer className="at-composer">
               {thread.contact.opt_out && <div className="at-notice warn"><Icon name="alert" size={16} className="" /><span>Este contato pediu para não receber mensagens (opt-out). Responda só se ele escrever primeiro.</span></div>}
               {!win.open && thread.conv.status !== "closed" && (
@@ -768,6 +777,7 @@ export default function Inbox() {
                 <button type="button" className="at-send" onClick={send} disabled={!win.open || !text.trim()} title="Enviar" aria-label="Enviar"><Icon name="up" size={18} className="" /></button>
               </div>
             </footer>
+            )}
             {staged.length > 0 && (
               <AttachTray items={staged} to={thread.contact.name || fmtPhone(thread.contact.phone)} onCaption={(id, caption) => setStaged((cur) => cur.map((x) => (x.id === id ? { ...x, caption } : x)))}
                 onRemove={removeStaged} onAdd={(fs) => void addFiles(fs)} onSend={sendStaged} onCancel={cancelStaged} />

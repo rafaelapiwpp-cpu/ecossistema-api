@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { requireSession } from "@/lib/guard";
 import { canSee, canSeePhone, getScope, type Scope } from "@/lib/access";
+import { isPreview } from "@/lib/companies";
 import { logEvent, markRead, sendMedia, sendTemplate, sendText, renderTemplatePreview, type Conversation, type Contact } from "@/lib/chat";
 
 export const dynamic = "force-dynamic";
@@ -80,6 +81,10 @@ export async function POST(req: Request, { params }: Ctx) {
   const data = await load(id, user);
   if (!data) return NextResponse.json({ error: "Conversa não encontrada" }, { status: 404 });
   const { conv, contact, scope } = data;
+  // portal em prévia de treinamento: o cliente só visualiza (nada sai para a Meta nem muda a conversa)
+  if (scope.client && isPreview(scope.company)) {
+    return NextResponse.json({ error: "Esta é uma prévia de treinamento: o atendimento está disponível só para visualização." }, { status: 403 });
+  }
   const notMine = () => NextResponse.json({ error: "Não encontrado na sua empresa" }, { status: 404 });
   const b = await req.json().catch(() => ({}));
   const ctx = { phoneNumberId: conv.phone_number_id, to: contact.phone, conversationId: conv.id, contactId: contact.id, wabaId: conv.waba_id, userId: user.id };

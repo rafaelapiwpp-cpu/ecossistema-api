@@ -10,7 +10,7 @@ type Item = { id: number; name: string; color: string | null };
 type Settings = {
   company: { id: number; name: string; slug: string; tagline: string | null; logo: string | null; primary_color: string; secondary_color: string | null };
   departments: Item[]; tags: Item[]; auto_tag_ids: number[]; default_department_id: number | null;
-  numbers: { id: string; display_phone_number: string; verified_name: string | null; label: string | null; quality_rating: string | null }[];
+  numbers: { id: string; display_phone_number: string; verified_name: string | null; label: string | null; quality_rating: string | null; inactive?: boolean }[];
   users: { id: number; name: string; department_id: number | null }[];
   quickReplies: { id: number; title: string; body: string; shortcut: string | null }[];
   me: { id: number; name: string; email: string; department_id: number | null };
@@ -69,7 +69,7 @@ function CompanyCard({ s }: { s: Settings }) {
       </div>
       <p className="sub" style={{ marginTop: 12 }}>Números de WhatsApp que você atende por aqui:</p>
       <ul className="ps-numbers">
-        {s.numbers.map((n) => <li key={n.id}><Icon name="phone" size={14} className="" /><b>{n.label || n.verified_name || n.display_phone_number}</b><span>{n.display_phone_number}{n.quality_rating && QUALITY[n.quality_rating.toUpperCase()] ? ` · ${QUALITY[n.quality_rating.toUpperCase()]}` : ""}</span></li>)}
+        {s.numbers.map((n) => <li key={n.id}><Icon name="phone" size={14} className="" /><b>{n.label || n.verified_name || n.display_phone_number}</b><span>{n.display_phone_number}{n.quality_rating && QUALITY[n.quality_rating.toUpperCase()] ? ` · ${QUALITY[n.quality_rating.toUpperCase()]}` : ""}{n.inactive ? " · inativo na plataforma" : ""}</span></li>)}
         {!s.numbers.length && <li><span>Nenhum número liberado ainda.</span></li>}
       </ul>
       <p className="ps-hint" style={{ marginTop: 10 }}>Logo, cores, slogan e números são definidos por quem administra o sistema. Precisa mudar? Fale com a equipe que cuida da sua conta.</p>

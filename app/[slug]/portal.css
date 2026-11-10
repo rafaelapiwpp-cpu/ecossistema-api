@@ -175,6 +175,9 @@ a.ph-stat:hover { transform: translateY(-1px); box-shadow: var(--shadow-pop); }
 .ph-q { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--text-2); flex: none; align-self: flex-start; margin-top: 2px; padding: 3px 8px; border-radius: 999px; background: var(--surface); }
 .ph-q i { width: 7px; height: 7px; border-radius: 50%; background: var(--text-3); }
 .ph-q.good i { background: var(--good); } .ph-q.warn i { background: var(--warning); } .ph-q.bad i { background: var(--critical); }
+.ph-num-tags { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; align-self: flex-start; }
+.ph-num-tags .ph-q { margin-top: 0; }
+.ph-q.off { color: var(--text-3); background: var(--fill-2); }
 .ph-num-counts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
 .ph-num-counts em { font-style: normal; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--fill-2); color: var(--text-2); white-space: nowrap; }
 .ph-num-counts em b { font-variant-numeric: tabular-nums; }
@@ -378,3 +381,17 @@ a.ph-stat:hover { transform: translateY(-1px); box-shadow: var(--shadow-pop); }
 .dl-opt input { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; flex: none; }
 .dl-mode { display: grid; gap: 4px; margin-top: 4px; }
 @media (max-width: 900px) { .dl-top { grid-template-columns: 1fr; } .dl-table { margin: 0 -16px; } .dl-table th:first-child, .dl-table td:first-child { padding-left: 16px; } }
+
+/* ---- Prévia de treinamento (recurso "previa"): faixa fixa + aviso ao entrar ---- */
+.pv-strip { position: sticky; top: 8px; z-index: 30; display: flex; align-items: center; gap: 8px; padding: 8px 14px; margin-bottom: 14px; border-radius: 12px; font-size: 12.5px; color: var(--text); background: color-mix(in srgb, var(--warning) 18%, var(--surface)); border: .5px solid color-mix(in srgb, var(--warning) 45%, transparent); }
+.pv-strip svg { flex: none; color: var(--warning); }
+.pv-strip span { flex: 1; min-width: 0; }
+.pv-strip button { flex: none; border: 0; background: transparent; font: inherit; font-weight: 600; color: var(--accent); cursor: pointer; padding: 2px 4px; border-radius: 6px; }
+.pv-strip button:hover { text-decoration: underline; }
+.pv-back { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)); background: rgba(0,0,0,.45); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.pv-modal { width: min(460px, 100%); max-height: 100%; overflow: auto; background: var(--surface); color: var(--text); border-radius: 20px; padding: 24px; box-shadow: 0 0 0 .5px var(--border), 0 24px 60px rgba(0,0,0,.25); }
+.pv-ico { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: color-mix(in srgb, var(--warning) 18%, transparent); color: var(--warning); margin-bottom: 12px; }
+.pv-modal h2 { margin: 0 0 8px; font-size: 19px; line-height: 1.25; }
+.pv-modal p { margin: 0 0 12px; font-size: 14px; line-height: 1.5; color: var(--text-2); }
+.pv-modal ul { margin: 0 0 18px; padding-left: 18px; display: grid; gap: 6px; font-size: 13.5px; line-height: 1.45; color: var(--text-2); }
+.pv-ok { width: 100%; height: 42px; border: 0; border-radius: 12px; background: var(--accent-fill); color: var(--accent-ink, #fff); font: inherit; font-weight: 600; cursor: pointer; }

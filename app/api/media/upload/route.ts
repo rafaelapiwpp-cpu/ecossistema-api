@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/guard";
 import { uploadMedia } from "@/lib/chat";
 import { query } from "@/lib/db";
 import { canSee, canSeePhone, getScope } from "@/lib/access";
+import { isPreview } from "@/lib/companies";
 import { saveMedia } from "@/lib/media-cache";
 import { MEDIA_LIMITS, normalizeMime, type MediaKind } from "@/lib/media-types";
 
@@ -26,6 +27,7 @@ export async function POST(req: Request) {
   if (!(file instanceof Blob) || !pnid) return NextResponse.json({ error: "Arquivo ou número ausente" }, { status: 400 });
   const [pn] = await query<{ waba_id: string }>("select waba_id from phone_numbers where id = $1", [pnid]);
   const scope = await getScope(r.user);
+  if (scope.client && isPreview(scope.company)) return NextResponse.json({ error: "Esta é uma prévia de treinamento: o atendimento está disponível só para visualização." }, { status: 403 });
   if (!pn || !canSee(scope, pn.waba_id) || !canSeePhone(scope, pnid)) return NextResponse.json({ error: "Número não encontrado" }, { status: 404 });
   const filename = String(form.get("name") || (file as any).name || "arquivo").slice(0, 200);
   const mime = normalizeMime(String(form.get("mime") || file.type || ""), filename);

@@ -10,7 +10,7 @@ import { hashPassword } from "@/lib/auth";
 import { companyBySlug, getScope, type Company, type Scope } from "@/lib/access";
 import { isManagerRole } from "@/lib/roles";
 import { graphForPhone } from "@/lib/connections";
-import { logoSrc } from "@/lib/companies";
+import { isPreview, logoSrc, previewNumber } from "@/lib/companies";
 import type { Settings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -61,6 +61,9 @@ export async function GET(req: Request) {
   if (!company) return NextResponse.json({ error: "Empresa não encontrada" }, { status: 404 });
   const phones = await phonesOf(scope, company.id);
   const brand = { id: company.id, name: company.name, slug: company.slug, tagline: company.tagline || null, logo: logoSrc(company), primary_color: company.primary_color, secondary_color: company.secondary_color };
+  // prévia de treinamento: números aparecem inativos e com qualidade alta ou média (ver lib/companies › previewNumber)
+  const preview = isPreview(company);
+  const shown = <T extends { quality_rating: string | null }>(n: T) => (preview ? previewNumber(n) : n);
 
   if (p.get("settings")) {
     const [departments, tags, autoTags, numbers, users, quickReplies] = await Promise.all([
@@ -71,7 +74,7 @@ export async function GET(req: Request) {
       query("select id, name, department_id, active from users where company_id = $1 and active order by name", [company.id]),
       query("select id, title, body, shortcut from quick_replies where company_id = $1 order by title", [company.id]),
     ]);
-    return NextResponse.json({ company: brand, departments, tags, auto_tag_ids: autoTags.map((t) => t.tag_id), default_department_id: company.default_department_id ?? null, numbers, users, quickReplies, me: { id: r.user.id, name: r.user.name, email: r.user.email, department_id: r.user.department_id ?? null } });
+    return NextResponse.json({ company: brand, departments, tags, auto_tag_ids: autoTags.map((t) => t.tag_id), default_department_id: company.default_department_id ?? null, numbers: numbers.map(shown), preview, users, quickReplies, me: { id: r.user.id, name: r.user.name, email: r.user.email, department_id: r.user.department_id ?? null } });
   }
 
   // ---- Início ----
@@ -129,7 +132,8 @@ export async function GET(req: Request) {
     company: brand,
     me: { id: r.user.id, name: r.user.name, role: r.user.role },
     counts: { ...counts, unread, closed_today: Number(closedToday[0]?.n || 0), in_today: msgs.in, out_today: msgs.out },
-    numbers: numbers.map(({ profile_picture_url, profile_picture_at, ...n }) => ({ ...n, picture: profile_picture_url, ...(perPhone[n.id] || { open: 0, pending: 0, closed: 0 }) })),
+    numbers: numbers.map(({ profile_picture_url, profile_picture_at, ...n }) => ({ ...shown(n), picture: profile_picture_url, ...(perPhone[n.id] || { open: 0, pending: 0, closed: 0 }) })),
+    preview,
     waiting,
     funnel: pipe,
     series,
