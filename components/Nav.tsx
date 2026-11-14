@@ -4,7 +4,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-export type NavLink = { href: string; label: string; icon: string; full?: boolean; admin?: boolean; manager?: boolean; master?: boolean; exact?: boolean };
+export type NavLink = { href: string; label: string; icon: string; full?: boolean; admin?: boolean; manager?: boolean; exact?: boolean };
 
 const LINKS: NavLink[] = [
   { href: "/", label: "Visão geral", icon: "home" },
@@ -16,7 +16,6 @@ const LINKS: NavLink[] = [
   { href: "/templates", label: "Templates", icon: "template" },
   { href: "/conexoes", label: "Conexões", icon: "plug", manager: true },
   { href: "/falhas", label: "Falhas de envio", icon: "alert" },
-  { href: "/financeiro", label: "Financeiro", icon: "money", master: true },
   { href: "/equipe", label: "Equipe", icon: "team", admin: true },
   { href: "/configuracoes", label: "Configurações", icon: "settings", admin: true },
 ];
@@ -58,7 +57,6 @@ const ICONS: Record<string, React.ReactNode> = {
   check: <path d="M5 12.5l4.5 4.5L19 7.5" strokeWidth="2.4" />,
   search: <><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></>,
   plus: <path d="M12 5v14M5 12h14" strokeWidth="2.2" />,
-  money: <><path d="M4 19V10M9.5 19V5M15 19v-7M20.5 19V8" strokeWidth="2.2" /><path d="M3 21h18" /></>,
   plug: <><path d="M9 3v5M15 3v5" /><path d="M6 8h12v3a6 6 0 0 1-12 0V8z" /><path d="M12 17v4" /></>,
   lock: <><rect x="5" y="10.5" width="14" height="10" rx="2.5" /><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" /></>,
   users: <><circle cx="9" cy="8.5" r="3.2" /><path d="M3.5 19.5c0-3.2 2.5-5.5 5.5-5.5s5.5 2.3 5.5 5.5" /><path d="M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.3c1.8.8 3 2.7 3 5.2" /></>,
@@ -183,7 +181,7 @@ export default function Nav({ admin = true, manager = true, user = null, canLogo
   for (const k of ["p", "waba"]) if (sp.get(k)) keep.set(k, sp.get(k)!);
   const qs = keep.toString();
   const keepQs = new Set(["/", "/templates", "/falhas"]);
-  const links = (custom || LINKS).filter((l) => (!l.admin || admin) && (!l.manager || manager) && (!l.master || user?.role === "master"));
+  const links = (custom || LINKS).filter((l) => (!l.admin || admin) && (!l.manager || manager));
   const isActive = (l: { href: string; exact?: boolean }) => path === l.href || (!l.exact && l.href !== "/" && path.startsWith(l.href + "/"));
   const hrefOf = (href: string) => (qs && keepQs.has(href) ? `${href}?${qs}` : href);
   useEffect(() => { setMore(false); }, [path]);

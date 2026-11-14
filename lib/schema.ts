@@ -400,7 +400,7 @@ export const SCHEMA = [
   `create table if not exists login_failures (id bigserial primary key, login text not null, ip text not null, at timestamptz not null default now())`,
   `create index if not exists login_failures_login on login_failures (login, at desc)`,
   `create index if not exists login_failures_ip on login_failures (ip, at desc)`,
-  // ---- Financeiro do Master (v22): lançamentos, entradas fixas mensais e ajustes (metas, preço, dias úteis) ----
+  // ---- (v22) Tabelas do financeiro: a área saiu do sistema em 14/11/2026; ficam vazias, sem uso, para não apagar nada em produção ----
   `create table if not exists fin_entries (
     id serial primary key, kind text not null, month text not null, day date not null,
     client text not null default '', title text not null default '',
