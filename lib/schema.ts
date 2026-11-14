@@ -400,9 +400,24 @@ export const SCHEMA = [
   `create table if not exists login_failures (id bigserial primary key, login text not null, ip text not null, at timestamptz not null default now())`,
   `create index if not exists login_failures_login on login_failures (login, at desc)`,
   `create index if not exists login_failures_ip on login_failures (ip, at desc)`,
+  // ---- Financeiro do Master (v22): lançamentos, entradas fixas mensais e ajustes (metas, preço, dias úteis) ----
+  `create table if not exists fin_entries (
+    id serial primary key, kind text not null, month text not null, day date not null,
+    client text not null default '', title text not null default '',
+    volume integer not null default 0, delivered integer not null default 0,
+    price numeric(10,4) not null default 0, unit_cost numeric(10,4) not null default 0, amount numeric(14,2) not null default 0,
+    paid boolean not null default false, cost_paid boolean not null default false,
+    due date, note text not null default '', created_at timestamptz default now(), updated_at timestamptz default now()
+  )`,
+  `create index if not exists fin_entries_month on fin_entries (month, day)`,
+  `create table if not exists fin_fixed (
+    id serial primary key, client text not null, amount numeric(14,2) not null default 0, active boolean not null default true,
+    start_month text not null, end_month text, created_at timestamptz default now()
+  )`,
+  `create table if not exists fin_config (id integer primary key default 1 check (id = 1), data jsonb not null default '{}'::jsonb)`,
 ];
 
-export const SCHEMA_VERSION = 21;
+export const SCHEMA_VERSION = 22;
 
 export async function ensureSchema() {
   const sql = db();
