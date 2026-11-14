@@ -38,9 +38,13 @@ export type Config = {
   workdays: number[];
   /** Feriados e folgas (AAAA-MM-DD). */
   holidays: string[];
+  /** Caixa: saldo de cada conta/banco e o dia em que foi conferido (AAAA-MM-DD). */
+  accounts: Account[];
+  cashAt: string | null;
 };
+export type Account = { name: string; balance: number };
 export const DEFAULT_CONFIG: Config = {
-  firstGoal: 20000, step: 5000, monthGoal: 30000, closingDay: 5, price: 0.27, unitCost: 0.15, workdays: [1, 2, 3, 4, 5], holidays: [],
+  firstGoal: 20000, step: 5000, monthGoal: 30000, closingDay: 5, price: 0.27, unitCost: 0.15, workdays: [1, 2, 3, 4, 5], holidays: [], accounts: [], cashAt: null,
 };
 
 const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;

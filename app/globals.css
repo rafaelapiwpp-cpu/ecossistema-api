@@ -995,3 +995,15 @@ button.fin-flag { border: 0; font-family: inherit; cursor: pointer; }
 button.fin-flag:hover { filter: brightness(.96); }
 @media (max-width: 1000px) { .fin-three { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .fin-form, .fin-kinds, .fin-duo { grid-template-columns: 1fr; } .fin-big { font-size: 2.2rem; } .fin-hero { padding: 16px 16px 10px; } }
+.fin-accounts { display: grid; gap: 8px; }
+.fin-account { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.fin-account input { text-overflow: ellipsis; }
+.fin-ledger { display: grid; gap: 2px; }
+.fin-ledger > div { display: flex; align-items: center; justify-content: space-between; gap: 14px; font-size: 13.5px; padding: 8px 12px; border-radius: 10px; }
+.fin-ledger > div > span { color: var(--text-2); }
+.fin-ledger .fin-check { min-height: 0; }
+.fin-ledger .sum { border-top: 1px solid var(--border); border-radius: 0; margin-top: 4px; padding-top: 12px; }
+.fin-ledger .sum b { font-size: 15px; }
+.fin-ledger .hl { background: var(--accent-soft); margin-top: 4px; }
+.fin-ledger .hl span { color: var(--text); font-weight: 600; }
+.fin-ledger .hl b { font-size: 17px; color: var(--accent); }

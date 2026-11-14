@@ -7,6 +7,7 @@ import Overview from "./Overview";
 import Plan from "./Plan";
 import Daily from "./Daily";
 import Entries from "./Entries";
+import Cash from "./Cash";
 import EntryModal from "./EntryModal";
 import FinSettings from "./FinSettings";
 
@@ -17,7 +18,7 @@ export type OpenEntry = (e?: Partial<Entry> | null, kind?: Kind) => void;
 export type FinProps = { s: Summary; data: FinData; run: Run; openEntry: OpenEntry; goal: number; setGoal: (n: number) => void };
 
 const TABS = [
-  ["geral", "Visão geral"], ["dia", "Dia a dia"], ["plano", "Projeção e plano"], ["lanc", "Lançamentos"], ["ajustes", "Ajustes"],
+  ["geral", "Visão geral"], ["dia", "Dia a dia"], ["plano", "Projeção e plano"], ["lanc", "Lançamentos"], ["caixa", "Caixa"], ["ajustes", "Ajustes"],
 ] as const;
 type Tab = (typeof TABS)[number][0];
 
@@ -90,7 +91,7 @@ export default function Finance() {
       <div className="fin-tabs" role="tablist">
         {TABS.map(([k, label]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{label}</button>)}
       </div>
-      {empty && tab !== "ajustes" && (
+      {empty && tab !== "ajustes" && tab !== "caixa" && (
         <div className="card fin-empty">
           <h2>Comece o seu financeiro</h2>
           <p className="sub">Ainda não há nada lançado. Registre a primeira campanha ou consultoria, ou traga tudo de uma vez por um arquivo em Ajustes.</p>
@@ -101,6 +102,7 @@ export default function Finance() {
       {tab === "dia" && <Daily {...props} />}
       {tab === "plano" && <Plan {...props} />}
       {tab === "lanc" && <Entries {...props} />}
+      {tab === "caixa" && <Cash {...props} />}
       {tab === "ajustes" && <FinSettings {...props} month={cur} />}
       {modal && <EntryModal entry={modal.entry} kind={modal.kind} month={cur} today={today} config={data.config} clients={[...new Set(data.entries.map((e) => e.client).filter(Boolean))].sort()} run={run} onClose={() => setModal(null)} />}
     </div>

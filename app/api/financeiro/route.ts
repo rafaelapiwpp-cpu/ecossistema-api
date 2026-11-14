@@ -28,6 +28,8 @@ function cleanConfig(raw: any): Config {
     price: pos(c.price, d.price, 100), unitCost: c.unitCost === undefined ? d.unitCost : num(c.unitCost, 100),
     workdays: workdays.length ? workdays : d.workdays,
     holidays: Array.isArray(c.holidays) ? [...new Set<string>(c.holidays.filter(isDay))].sort().slice(0, 200) : [],
+    accounts: Array.isArray(c.accounts) ? c.accounts.slice(0, 30).map((a: any) => ({ name: txt(a?.name, 60), balance: isFinite(Number(a?.balance)) ? Math.round(Math.max(-1e10, Math.min(1e10, Number(a.balance))) * 100) / 100 : 0 })).filter((a: { name: string }) => a.name) : [],
+    cashAt: isDay(c.cashAt) ? c.cashAt : null,
   };
 }
 
@@ -117,13 +119,13 @@ export async function POST(req: Request) {
         await query("delete from fin_fixed where id = $1", [id]);
         break;
       case "config_save":
-        await query("insert into fin_config (id, data) values (1, $1::jsonb) on conflict (id) do update set data = excluded.data", [cleanConfig(b.config) as any]); // objeto: o driver já serializa como JSON
+        await query("insert into fin_config (id, data) values (1, $1::jsonb) on conflict (id) do update set data = excluded.data", [cleanConfig({ ...cfg, ...(b.config && typeof b.config === "object" ? b.config : {}) }) as any]); // junta com o que já existe; objeto: o driver já serializa como JSON
         break;
       case "import": {
         // arquivo de cópia/importação: { entries, fixed, config? }; "replace" troca tudo o que existe
         const entries = Array.isArray(b.entries) ? b.entries.slice(0, 5000) : [];
         const fixed = Array.isArray(b.fixed) ? b.fixed.slice(0, 500) : [];
-        const newCfg = b.config ? cleanConfig(b.config) : null;
+        const newCfg = b.config ? cleanConfig({ ...cfg, ...b.config }) : null;
         const es = entries.map((x: any) => cleanEntry(x, newCfg || cfg));
         const fs = fixed.map(cleanFixed);
         const wrong = [...es, ...fs].find((x) => typeof x === "string");
